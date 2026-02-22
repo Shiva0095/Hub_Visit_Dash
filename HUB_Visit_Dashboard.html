@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HUB Visit Dashboard – Hyderabad</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+    }
+    header {
+      background: linear-gradient(135deg, #1a202c 0%, #2d3748 60%, #4a5568 100%);
+      color: white;
+      padding: 22px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    }
+    header .title-block h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: 0.5px; }
+    header .title-block p { font-size: 0.82rem; color: #a0aec0; margin-top: 4px; }
+    header .badge {
+      background: #3182ce;
+      color: white;
+      border-radius: 20px;
+      padding: 6px 18px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .dashboard { padding: 24px 28px; }
+
+    /* KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px 22px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      border-left: 5px solid #3182ce;
+      transition: transform 0.15s;
+    }
+    .kpi-card:hover { transform: translateY(-2px); }
+    .kpi-card.green  { border-left-color: #38a169; }
+    .kpi-card.orange { border-left-color: #dd6b20; }
+    .kpi-card.purple { border-left-color: #805ad5; }
+    .kpi-card.teal   { border-left-color: #319795; }
+    .kpi-card.red    { border-left-color: #e53e3e; }
+    .kpi-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #718096; font-weight: 600; }
+    .kpi-value { font-size: 2rem; font-weight: 800; color: #2d3748; margin: 6px 0 2px; }
+    .kpi-sub   { font-size: 0.75rem; color: #a0aec0; }
+
+    /* Chart grid */
+    .chart-grid {
+      display: grid;
+      gap: 20px;
+    }
+    .row-2 { grid-template-columns: 1fr 1fr; }
+    .row-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .row-1 { grid-template-columns: 1fr; }
+    .row-2-1 { grid-template-columns: 2fr 1fr; }
+    .row-1-2 { grid-template-columns: 1fr 2fr; }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 22px 22px 18px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    }
+    .card-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #4a5568;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #edf2f7;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      display: inline-block;
+    }
+    .dot-blue   { background: #3182ce; }
+    .dot-green  { background: #38a169; }
+    .dot-orange { background: #dd6b20; }
+    .dot-purple { background: #805ad5; }
+    .dot-teal   { background: #319795; }
+    .dot-red    { background: #e53e3e; }
+
+    canvas { max-height: 300px; }
+    .canvas-tall { max-height: 360px; }
+
+    /* Funnel */
+    .funnel-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 6px 0;
+    }
+    .funnel-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .funnel-label {
+      width: 160px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #4a5568;
+      flex-shrink: 0;
+      text-align: right;
+    }
+    .funnel-bar-wrap {
+      flex: 1;
+      background: #edf2f7;
+      border-radius: 30px;
+      height: 30px;
+      overflow: hidden;
+    }
+    .funnel-bar {
+      height: 100%;
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      padding-left: 10px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: white;
+      transition: width 0.6s ease;
+    }
+    .funnel-pct {
+      width: 52px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #2d3748;
+      flex-shrink: 0;
+    }
+
+    /* Location pills */
+    .loc-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .pill {
+      background: #ebf8ff;
+      color: #2b6cb0;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .section-gap { margin-top: 20px; }
+    footer {
+      text-align: center;
+      padding: 18px;
+      color: #a0aec0;
+      font-size: 0.72rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="title-block">
+    <h1>🚗 HUB Visit Dashboard</h1>
+    <p>Hyderabad Pilot Readiness · Apr 2025 – Feb 2026</p>
+  </div>
+  <div class="badge">LIVE DATA</div>
+</header>
+
+<div class="dashboard">
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Walk-ins</div>
+      <div class="kpi-value">20,455</div>
+      <div class="kpi-sub">Apr 2025 – Feb 2026</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Unique Drivers</div>
+      <div class="kpi-value">12,369</div>
+      <div class="kpi-sub">Unique employee IDs</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">Allocation Rate</div>
+      <div class="kpi-value">60.4%</div>
+      <div class="kpi-sub">12,351 allocated</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-label">Fresh Walk-ins</div>
+      <div class="kpi-value">12,348</div>
+      <div class="kpi-sub">60.4% of total</div>
+    </div>
+    <div class="kpi-card teal">
+      <div class="kpi-label">Returning Walk-ins</div>
+      <div class="kpi-value">8,107</div>
+      <div class="kpi-sub">Previous week visits</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Not Yet Allotted</div>
+      <div class="kpi-value">8,104</div>
+      <div class="kpi-sub">Pending allocation</div>
+    </div>
+  </div>
+
+  <!-- Row 1: Monthly Trend (wide) + Channel Category -->
+  <div class="chart-grid row-2-1">
+    <div class="card">
+      <div class="card-title"><span class="dot dot-blue"></span>Monthly Walk-in Trend</div>
+      <canvas id="monthlyTrend"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot dot-purple"></span>Channel Category</div>
+      <canvas id="channelCategory"></canvas>
+    </div>
+  </div>
+
+  <!-- Row 2: Location by Month + Fresh vs Returning -->
+  <div class="chart-grid row-2 section-gap">
+    <div class="card">
+      <div class="card-title"><span class="dot dot-teal"></span>Walk-ins by Location (Monthly)</div>
+      <div class="loc-pills">
+        <span class="pill" style="background:#ebf8ff;color:#2b6cb0">Hyderabad</span>
+        <span class="pill" style="background:#f0fff4;color:#276749">Damaigudda</span>
+        <span class="pill" style="background:#fff5f5;color:#9b2c2c">Nagole Dost</span>
+      </div>
+      <canvas id="locationChart"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot dot-orange"></span>Fresh vs Returning Walk-ins</div>
+      <canvas id="walkinStatus"></canvas>
+    </div>
+  </div>
+
+  <!-- Row 3: Funnel + Channels + Top Agents -->
+  <div class="chart-grid row-2 section-gap">
+    <div class="card">
+      <div class="card-title"><span class="dot dot-green"></span>Conversion Funnel</div>
+      <div class="funnel-wrap" id="funnelChart"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot dot-blue"></span>Top Channels (Source)</div>
+      <canvas id="channelChart" class="canvas-tall"></canvas>
+    </div>
+  </div>
+
+  <!-- Row 4: Reasons + Top Agents -->
+  <div class="chart-grid row-2 section-gap">
+    <div class="card">
+      <div class="card-title"><span class="dot dot-red"></span>Top Reasons for Not Joining</div>
+      <canvas id="reasonsChart" class="canvas-tall"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot dot-purple"></span>Top 10 Agents by Walk-ins Handled</div>
+      <canvas id="agentsChart" class="canvas-tall"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<footer>HUB Visit Dashboard · Data Source: Pilot_Readiness_HYD_2.0 · Generated Feb 2026</footer>
+
+<script>
+// ─── Color Palettes ────────────────────────────────────────────────
+const BLUE   = '#3182ce';
+const GREEN  = '#38a169';
+const ORANGE = '#dd6b20';
+const PURPLE = '#805ad5';
+const TEAL   = '#319795';
+const RED    = '#e53e3e';
+
+const MONTHS = ['Apr 25','Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26'];
+
+// ─── 1. Monthly Trend ────────────────────────────────────────────
+new Chart(document.getElementById('monthlyTrend'), {
+  type: 'line',
+  data: {
+    labels: MONTHS,
+    datasets: [{
+      label: 'Walk-ins',
+      data: [3, 2610, 2532, 2670, 2986, 4076, 3696, 1882],
+      borderColor: BLUE,
+      backgroundColor: 'rgba(49,130,206,0.10)',
+      borderWidth: 3,
+      fill: true,
+      tension: 0.4,
+      pointBackgroundColor: BLUE,
+      pointRadius: 5,
+      pointHoverRadius: 7
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y.toLocaleString()} walk-ins` } }
+    },
+    scales: {
+      y: { beginAtZero: true, grid: { color: '#edf2f7' }, ticks: { font: { size: 11 } } },
+      x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+    }
+  }
+});
+
+// ─── 2. Channel Category (Doughnut) ─────────────────────────────
+new Chart(document.getElementById('channelCategory'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Perf Marketing','Driver Sourcing Vendor','Driver Referral','Field Sales Executive'],
+    datasets: [{
+      data: [15547, 3170, 978, 760],
+      backgroundColor: [BLUE, GREEN, ORANGE, PURPLE],
+      borderWidth: 2,
+      borderColor: '#fff'
+    }]
+  },
+  options: {
+    responsive: true,
+    cutout: '60%',
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12, boxWidth: 12 } },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString()}` } }
+    }
+  }
+});
+
+// ─── 3. Location by Month (Grouped Bar) ─────────────────────────
+new Chart(document.getElementById('locationChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26'],
+    datasets: [
+      { label: 'Hyderabad',    data: [1394,1181,1371,1811,2372,1895,1065], backgroundColor: BLUE },
+      { label: 'Damaigudda',   data: [398,334,344,371,414,387,174],         backgroundColor: GREEN },
+      { label: 'Nagole Dost',  data: [0,0,0,0,208,418,165],                 backgroundColor: ORANGE }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } }
+    },
+    scales: {
+      y: { beginAtZero: true, grid: { color: '#edf2f7' }, stacked: false, ticks: { font: { size: 11 } } },
+      x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+    }
+  }
+});
+
+// ─── 4. Fresh vs Returning (Stacked Bar) ────────────────────────
+new Chart(document.getElementById('walkinStatus'), {
+  type: 'bar',
+  data: {
+    labels: ['Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26'],
+    datasets: [
+      { label: 'Fresh Walkin',          data: [1979,1894,1885,1697,1966,1991,933],  backgroundColor: TEAL },
+      { label: 'Previous Week Walkin',  data: [631,638,785,1289,2110,1705,949],     backgroundColor: 'rgba(128,90,213,0.75)' }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } }
+    },
+    scales: {
+      x: { stacked: true, grid: { display: false }, ticks: { font: { size: 11 } } },
+      y: { stacked: true, beginAtZero: true, grid: { color: '#edf2f7' }, ticks: { font: { size: 11 } } }
+    }
+  }
+});
+
+// ─── 5. Conversion Funnel (Custom HTML) ─────────────────────────
+const funnelData = [
+  { label: 'Total Walk-ins',     value: 20455, color: BLUE   },
+  { label: 'Documentation Done', value: 7023,  color: TEAL   },
+  { label: 'Driving Test Pass',  value: 6930,  color: GREEN  },
+  { label: 'Contract Signed',    value: 7377,  color: PURPLE },
+  { label: 'Training Complete',  value: 7130,  color: ORANGE },
+  { label: 'Vehicle Allocated',  value: 12351, color: '#e53e3e' },
+];
+const funnelMax = 20455;
+const funnelEl = document.getElementById('funnelChart');
+funnelData.forEach(d => {
+  const pct = ((d.value / funnelMax) * 100).toFixed(1);
+  funnelEl.innerHTML += `
+    <div class="funnel-row">
+      <div class="funnel-label">${d.label}</div>
+      <div class="funnel-bar-wrap">
+        <div class="funnel-bar" style="width:${pct}%; background:${d.color}">
+          ${d.value.toLocaleString()}
+        </div>
+      </div>
+      <div class="funnel-pct">${pct}%</div>
+    </div>`;
+});
+
+// ─── 6. Top Channels (Horizontal Bar) ───────────────────────────
+new Chart(document.getElementById('channelChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Organic','Driver Sourcing Vendor','Car Sticker','Whatsapp','Fountain',
+             'Driver Referral','Driver Sourcing SubVendor','Field Sale Executive','OLX Leads','VMP Leads'],
+    datasets: [{
+      label: 'Walk-ins',
+      data: [5223, 3145, 2413, 1700, 1172, 978, 933, 760, 477, 452],
+      backgroundColor: [
+        '#3182ce','#4299e1','#63b3ed','#319795','#38a169',
+        '#68d391','#805ad5','#b794f4','#dd6b20','#f6ad55'
+      ],
+      borderRadius: 5
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x.toLocaleString()} walk-ins` } }
+    },
+    scales: {
+      x: { beginAtZero: true, grid: { color: '#edf2f7' }, ticks: { font: { size: 11 } } },
+      y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+    }
+  }
+});
+
+// ─── 7. Reasons for Not Joining ─────────────────────────────────
+new Chart(document.getElementById('reasonsChart'), {
+  type: 'bar',
+  data: {
+    labels: [
+      'Sent for Driving Test','Agent Not Assigned','Wants Specific Day',
+      'No Address Proof','Needs Lower Deposit','Enquiry',
+      'Uber ID Issue','Driver Disappeared','Vehicle Allotted','ID Rejected','Add On Driver','BGC Pending'
+    ],
+    datasets: [{
+      label: 'Count',
+      data: [5319, 1431, 830, 624, 590, 441, 321, 279, 230, 165, 141, 126],
+      backgroundColor: [
+        GREEN, '#e53e3e','#dd6b20','#805ad5',TEAL,BLUE,
+        '#38b2ac','#fc8181','#68d391','#b794f4','#f6ad55','#63b3ed'
+      ],
+      borderRadius: 5
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x.toLocaleString()}` } }
+    },
+    scales: {
+      x: { beginAtZero: true, grid: { color: '#edf2f7' }, ticks: { font: { size: 11 } } },
+      y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+    }
+  }
+});
+
+// ─── 8. Top Agents ───────────────────────────────────────────────
+new Chart(document.getElementById('agentsChart'), {
+  type: 'bar',
+  data: {
+    labels: [
+      'chatla_bharathwaj','avinash_ef11721','ravi_dondapati',
+      'manuru_ef11783','shakeel_ef11666','kavali_venkatesh',
+      'EF2210','lolokapuri_varma','allagonda_ef11719','bhaskar_ef11244'
+    ],
+    datasets: [{
+      label: 'Walk-ins',
+      data: [1510, 961, 938, 884, 839, 728, 576, 545, 481, 397],
+      backgroundColor: [
+        '#3182ce','#319795','#38a169','#805ad5','#dd6b20',
+        '#4299e1','#38b2ac','#68d391','#b794f4','#f6ad55'
+      ],
+      borderRadius: 5
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x.toLocaleString()} walk-ins` } }
+    },
+    scales: {
+      x: { beginAtZero: true, grid: { color: '#edf2f7' }, ticks: { font: { size: 11 } } },
+      y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+    }
+  }
+});
+</script>
+</body>
+</html>
