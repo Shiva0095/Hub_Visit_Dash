@@ -116,7 +116,7 @@ footer{text-align:center;padding:14px;color:#a0aec0;font-size:.65rem;border-top:
 <div class="filter-bar">
   <span class="filter-label">Filter:</span>
   <div class="filter-group" id="fg-month"></div>
-  <div class="filter-group" id="fg-week_label"></div>
+  <div class="filter-group" id="fg-week_begin"></div>
   <div class="filter-group" id="fg-Walkin_Location"></div>
   <div class="filter-group" id="fg-channel"></div>
   <div class="filter-group" id="fg-channel_category"></div>
@@ -292,20 +292,21 @@ function processRawData(rawRows) {
     const vals = [...new Set(rawRows.map(r => String(r[col]||'Unknown')))].sort();
     cats[col] = vals;
   });
-  // Month and week (sorted)
+  // Month and week_begin (sorted chronologically)
   const monthMap = {}, weekMap = {};
   rawRows.forEach(r => {
     const d = new Date(r['date']);
     if (isNaN(d)) return;
     const m = d.toLocaleDateString('en-US',{month:'short',year:'numeric'}).replace(',',' ');
-    const wn = getWeek(d);
-    const wl = `Wk ${String(wn).padStart(2,'0')} ${d.getFullYear()}`;
-    const ys = `${d.getFullYear()}-W${String(wn).padStart(2,'0')}`;
+    // Monday of the week
+    const monday = new Date(d);
+    monday.setDate(d.getDate() - d.getDay() + (d.getDay()===0 ? -6 : 1));
+    const wl = monday.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).replace(/ /g,' ');
     monthMap[m] = monthMap[m] || d.getTime();
-    weekMap[wl] = weekMap[wl] || ys;
+    weekMap[wl] = weekMap[wl] || monday.getTime();
   });
-  cats['month'] = Object.entries(monthMap).sort((a,b)=>a[1]-b[1]).map(e=>e[0]);
-  cats['week_label'] = Object.keys(weekMap).sort((a,b)=>weekMap[a]>weekMap[b]?1:-1);
+  cats['month']      = Object.entries(monthMap).sort((a,b)=>a[1]-b[1]).map(e=>e[0]);
+  cats['week_begin'] = Object.entries(weekMap).sort((a,b)=>a[1]-b[1]).map(e=>e[0]);
 
   const isValid = v => v && String(v) !== 'NaT' && String(v) !== '';
 
@@ -313,10 +314,11 @@ function processRawData(rawRows) {
     const d = new Date(r['date']);
     if (isNaN(d)) return null;
     const m = d.toLocaleDateString('en-US',{month:'short',year:'numeric'}).replace(',',' ');
-    const wn = getWeek(d);
-    const wl = `Wk ${String(wn).padStart(2,'0')} ${d.getFullYear()}`;
+    const monday = new Date(d);
+    monday.setDate(d.getDate() - d.getDay() + (d.getDay()===0 ? -6 : 1));
+    const wl = monday.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).replace(/ /g,' ');
     const mi = cats['month'].indexOf(m);
-    const wi = cats['week_label'].indexOf(wl);
+    const wi = cats['week_begin'].indexOf(wl);
 
     return [
       d.toISOString().slice(0,10),
@@ -360,7 +362,7 @@ function init() {
 // ─── FILTER DROPDOWNS ─────────────────────────────────────────────
 const FILTER_CONFIG = [
   {key:'month',       label:'Month',         short:'Month'},
-  {key:'week_label',  label:'Week',          short:'Week'},
+  {key:'week_begin',   label:'Week Begin',     short:'Week Begin'},
   {key:'Walkin_Location', label:'Location / Hub',short:'Location'},
   {key:'channel',     label:'Source / Channel',  short:'Channel'},
   {key:'channel_category',label:'Channel Category',short:'Ch.Cat'},
@@ -475,7 +477,7 @@ function clearAllFilters() {
 // ─── APPLY FILTERS ─────────────────────────────────────────────────
 // key→column index mapping
 const KEY_COL = {
-  'month': C.month, 'week_label': C.week, 'Walkin_Location': C.loc,
+  'month': C.month, 'week_begin': C.week, 'Walkin_Location': C.loc,
   'channel': C.ch, 'channel_category': C.chcat,
   'Walkin Status': C.ws, 'agent_username': C.agent
 };
