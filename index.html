@@ -301,11 +301,11 @@ tr:hover td.m{background:#dbeafe!important;}
 // Constants
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const LOC_ALL  = ["Hyderabad","Damaigudda","Nagole Dost","Hyderabad-DriveToOwn"];
+const LOC_ALL  = ["Hyderabad","Damaigudda","Nagole Dost"];
 const LOC_COLS = ["Overall",...LOC_ALL];
 const LOC_COLORS = {
   Hyderabad:"#1a56db", Damaigudda:"#0e9f6e",
-  "Nagole Dost":"#f59e0b", "Hyderabad-DriveToOwn":"#8b5cf6"
+  "Nagole Dost":"#f59e0b"
 };
 const PALETTE = ["#1a56db","#0e9f6e","#f59e0b","#8b5cf6","#ef4444","#06b6d4","#f97316","#6366f1","#ec4899","#14b8a6"];
 const METRICS = [
@@ -503,8 +503,8 @@ function render() {
   renderCharts(cur, ps, byData);
   document.getElementById("tblTitle").textContent =
     (view==="monthly"?"Monthly":view==="weekly"?"Weekly":"Daily")+" Metrics · "+selPeriod;
-  // Records count = tw from overall (apply status filter)
-  const o = cur.overall || {};
+  // Records count = tw from Overall (apply status filter)
+  const o = cur.Overall || cur.overall || {};
   let recs = o.tw || 0;
   if (F.status === "fresh")  recs = o.fresh || 0;
   if (F.status === "spill")  recs = o.spill || 0;
@@ -516,9 +516,9 @@ function render() {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function renderKPIs(cur, prev) {
   // Apply location filter to KPI data source
-  const locKey = F.loc ? F.loc : "overall";
-  const o  = cur[locKey]  || cur.overall  || {};
-  const po = prev ? (prev[locKey] || prev.overall || {}) : null;
+  const locKey = F.loc ? F.loc : "Overall";
+  const o  = cur[locKey]  || cur.Overall  || cur.overall || {};
+  const po = prev ? (prev[locKey] || prev.Overall || prev.overall || {}) : null;
 
   // Apply status filter
   const tw    = F.status==="fresh" ? (o.fresh||0) : F.status==="spill" ? (o.spill||0) : (o.tw||0);
@@ -526,8 +526,9 @@ function renderKPIs(cur, prev) {
   const alloc = o.alloc || 0;
   const fresh = o.fresh || 0;
   const spill = o.spill || 0;
-  const drop  = o.drop  || 0;
-  const drop2 = o.drop2 || 0;
+  const drop     = o.drop      || 0;
+  const drop2    = o.drop2     || 0;
+  const not_alloc = o.not_alloc != null ? o.not_alloc : Math.max(0, tu - alloc);
   const allocPct = tu > 0 ? (alloc/tu*100).toFixed(1) : "0.0";
   const freshPct = tw > 0 ? (fresh/tw*100).toFixed(1)  : "0.0";
 
@@ -573,7 +574,7 @@ function renderKPIs(cur, prev) {
     </div>
     <div class="kpi red">
       <div class="kpi-title">Not Yet Allotted</div>
-      <div class="kpi-val">${(tu-alloc).toLocaleString()}</div>
+      <div class="kpi-val">${not_alloc.toLocaleString()}</div>
       <div class="kpi-sub">${drop.toLocaleString()} cold · ${drop2.toLocaleString()} stalled</div>
     </div>`;
 }
@@ -598,7 +599,7 @@ function renderTable(cur, prev) {
     h += `<td class="m">${m.label}${m.pct?'<span class="pct"> (%)</span>':""}`;
     h += "</td>";
     activeLocs.forEach(l => {
-      const key = l==="Overall" ? "overall" : l;
+      const key = l;
       const cv = cur[key]||{}, pv = prev?(prev[key]||{}):null;
       const val = cv[m.key]||0, pval = pv?(pv[m.key]||0):null;
       let vs = fmtN(val);
@@ -660,8 +661,8 @@ function renderChannel() {
 }
 function renderFunnel(cur) {
   dc("cFunnel");
-  const locKey = F.loc ? F.loc : "overall";
-  const o = cur[locKey] || cur.overall || {};
+  const locKey = F.loc ? F.loc : "Overall";
+  const o = cur[locKey] || cur.Overall || cur.overall || {};
   const steps=[
     {l:"Walk-ins",v:o.tw||0},{l:"Unique",v:o.tu||0},
     {l:"Doc Paid",v:o.doc||0},{l:"SD Paid",v:o.sd||0},
