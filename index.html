@@ -1,739 +1,797 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HUB Visit Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;color:#2d3748;font-size:13px}
+:root{
+  --primary:#1a56db;--primary-light:#e8f0fe;
+  --green:#0e9f6e;--orange:#f59e0b;--purple:#8b5cf6;--red:#f05252;--teal:#06b6d4;
+  --bg:#f0f2f7;--card:#fff;--border:#e2e8f0;--text:#1e2a3b;--muted:#6b7a99;
+  --up:#0e9f6e;--down:#f05252;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text);font-size:13px;}
 
-/* ─── HEADER ─────────────────────────────── */
-.header{background:linear-gradient(135deg,#1a202c,#2d3748);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3)}
-.header h1{font-size:1.2rem;font-weight:700;letter-spacing:.3px}
-.header p{font-size:.72rem;color:#a0aec0;margin-top:2px}
-.header-right{display:flex;align-items:center;gap:10px}
-.badge{background:#3182ce;color:#fff;border-radius:20px;padding:4px 12px;font-size:.7rem;font-weight:700}
-#lastUpdated{font-size:.68rem;color:#a0aec0}
+/* ── Header ── */
+.header{background:linear-gradient(135deg,#1a56db 0%,#0f3d8a 100%);color:#fff;
+  padding:13px 24px;display:flex;align-items:center;justify-content:space-between;}
+.header h1{font-size:19px;font-weight:700;letter-spacing:.2px;}
+.header-right{text-align:right;font-size:11px;opacity:.8;}
 
-/* ─── FILTER BAR ─────────────────────────── */
-.filter-bar{background:#fff;border-bottom:2px solid #e2e8f0;padding:10px 24px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;position:sticky;top:57px;z-index:99;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.filter-label{font-size:.68rem;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:.8px;white-space:nowrap}
-.filter-group{position:relative}
-.filter-btn{background:#f7fafc;border:1.5px solid #cbd5e0;border-radius:8px;padding:5px 10px;font-size:.72rem;color:#4a5568;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;font-weight:600;min-width:100px;justify-content:space-between;transition:all .15s}
-.filter-btn:hover,.filter-btn.active{border-color:#3182ce;background:#ebf8ff;color:#2b6cb0}
-.filter-btn .cnt{background:#3182ce;color:#fff;border-radius:10px;padding:1px 5px;font-size:.62rem;font-weight:700}
-.dropdown-menu{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1.5px solid #cbd5e0;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:200px;max-width:260px;z-index:200;overflow:hidden}
-.dropdown-menu.open{display:block}
-.dd-search{padding:8px;border-bottom:1px solid #edf2f7}
-.dd-search input{width:100%;border:1.5px solid #cbd5e0;border-radius:6px;padding:4px 8px;font-size:.72rem;outline:none}
-.dd-search input:focus{border-color:#3182ce}
-.dd-options{max-height:220px;overflow-y:auto}
-.dd-option{display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:pointer;transition:background .1s}
-.dd-option:hover{background:#f7fafc}
-.dd-option input[type=checkbox]{accent-color:#3182ce;width:13px;height:13px;flex-shrink:0}
-.dd-option label{cursor:pointer;font-size:.73rem;color:#2d3748;flex:1}
-.dd-select-all{border-bottom:1px solid #edf2f7;font-weight:700;color:#3182ce}
-.filter-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
-#recordCount{font-size:.72rem;color:#4a5568;background:#f7fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:5px 10px;font-weight:600;white-space:nowrap}
-.clear-btn{background:#fff5f5;border:1.5px solid #fc8181;color:#c53030;border-radius:8px;padding:5px 12px;font-size:.72rem;font-weight:700;cursor:pointer;transition:all .15s}
-.clear-btn:hover{background:#fed7d7}
+/* ── Status bar ── */
+.status-bar{padding:6px 24px;font-size:11px;background:#fff8e1;border-bottom:1px solid #ffe082;color:#856404;}
+.status-bar.ok{background:#ecfdf5;border-color:#6ee7b7;color:#065f46;}
+.status-bar.err{background:#fef2f2;border-color:#fca5a5;color:#991b1b;}
 
-/* ─── MAIN ────────────────────────────────── */
-.main{padding:18px 24px}
+/* ── Tabs bar ── */
+.tabs-bar{background:var(--card);border-bottom:1px solid var(--border);
+  padding:8px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.tab-btn{padding:5px 16px;border:1px solid var(--border);background:#f8fafc;border-radius:6px;
+  cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);transition:all .15s;}
+.tab-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.period-sel{padding:5px 10px;border:1px solid var(--border);border-radius:6px;
+  background:#fff;font-size:12px;min-width:150px;cursor:pointer;}
+.tabs-right{margin-left:auto;display:flex;gap:6px;}
+.btn-sm{padding:5px 11px;border:1px solid var(--border);background:#fff;border-radius:6px;
+  cursor:pointer;font-size:11px;color:var(--muted);white-space:nowrap;}
+.btn-sm:hover{background:var(--primary-light);color:var(--primary);border-color:var(--primary);}
 
-/* ─── KPI ─────────────────────────────────── */
-.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px}
-.kpi-card{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 6px rgba(0,0,0,.07);border-left:4px solid #3182ce;transition:transform .15s}
-.kpi-card:hover{transform:translateY(-1px)}
-.kpi-card.green{border-left-color:#38a169}
-.kpi-card.orange{border-left-color:#dd6b20}
-.kpi-card.purple{border-left-color:#805ad5}
-.kpi-card.teal{border-left-color:#319795}
-.kpi-card.red{border-left-color:#e53e3e}
-.kpi-lbl{font-size:.63rem;text-transform:uppercase;letter-spacing:.8px;color:#718096;font-weight:700}
-.kpi-val{font-size:1.6rem;font-weight:800;color:#2d3748;margin:4px 0 2px;line-height:1}
-.kpi-sub{font-size:.65rem;color:#a0aec0}
+/* ── Filter bar ── */
+.filter-bar{background:var(--card);border-bottom:2px solid var(--border);
+  padding:9px 24px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.filter-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.7px;white-space:nowrap;margin-right:4px;}
+.filter-dd{position:relative;display:inline-flex;align-items:center;}
+.filter-dd select{
+  appearance:none;-webkit-appearance:none;
+  padding:5px 26px 5px 10px;border:1px solid var(--border);border-radius:18px;
+  background:#fff;font-size:12px;color:var(--text);cursor:pointer;
+  min-width:90px;font-weight:500;
+}
+.filter-dd select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px #1a56db22;}
+.filter-dd::after{
+  content:"▾";position:absolute;right:9px;pointer-events:none;
+  font-size:10px;color:var(--muted);
+}
+.filter-dd .badge{
+  position:absolute;top:-5px;right:4px;background:var(--primary);color:#fff;
+  font-size:9px;font-weight:700;border-radius:8px;padding:1px 5px;
+  pointer-events:none;display:none;
+}
+.filter-dd.active .badge{display:block;}
+.filter-dd.active select{border-color:var(--primary);background:var(--primary-light);}
+.records-count{margin-left:auto;background:#f0f4ff;border:1px solid #c7d7f9;
+  border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;color:var(--primary);
+  white-space:nowrap;}
+.clear-btn{padding:5px 12px;border:1px solid #fca5a5;background:#fef2f2;
+  border-radius:14px;font-size:12px;color:#dc2626;cursor:pointer;white-space:nowrap;}
+.clear-btn:hover{background:#fee2e2;}
 
-/* ─── CHARTS ──────────────────────────────── */
-.chart-section-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#fff;background:#4a5568;padding:6px 14px;border-radius:6px;margin:14px 0 10px;display:inline-block}
-.chart-row{display:grid;gap:14px;margin-bottom:14px}
-.cols-2{grid-template-columns:1fr 1fr}
-.cols-3{grid-template-columns:1fr 1fr 1fr}
-.cols-2-1{grid-template-columns:2fr 1fr}
-.cols-1-2{grid-template-columns:1fr 2fr}
-.chart-card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 6px rgba(0,0,0,.07)}
-.chart-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#4a5568;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #edf2f7;display:flex;align-items:center;gap:6px}
-.chart-title .dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
-.chart-wrap{position:relative}
-.chart-wrap canvas{max-height:260px}
-.chart-wrap.tall canvas{max-height:320px}
-.no-data{display:flex;align-items:center;justify-content:center;height:200px;color:#a0aec0;font-size:.85rem;font-style:italic}
+/* ── Container ── */
+.container{padding:14px 24px;}
 
-/* ─── LOADING ─────────────────────────────── */
-#loading{position:fixed;inset:0;background:rgba(26,32,44,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;color:#fff;gap:14px}
-.spinner{width:44px;height:44px;border:4px solid rgba(255,255,255,.2);border-top-color:#3182ce;border-radius:50%;animation:spin .8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-#loading p{font-size:.85rem;color:#a0aec0}
+/* ── KPI Cards — old style with colored left border ── */
+.kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px;}
+.kpi{background:var(--card);border-radius:10px;padding:14px 14px 12px 16px;
+  border:1px solid var(--border);border-left:4px solid var(--primary);
+  display:flex;flex-direction:column;gap:4px;}
+.kpi.blue  {border-left-color:#1a56db;}
+.kpi.green {border-left-color:#0e9f6e;}
+.kpi.orange{border-left-color:#f59e0b;}
+.kpi.purple{border-left-color:#8b5cf6;}
+.kpi.teal  {border-left-color:#06b6d4;}
+.kpi.red   {border-left-color:#f05252;}
+.kpi-title{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.kpi-val{font-size:26px;font-weight:700;line-height:1.1;}
+.kpi.blue   .kpi-val{color:#1a56db;}
+.kpi.green  .kpi-val{color:#0e9f6e;}
+.kpi.orange .kpi-val{color:#f59e0b;}
+.kpi.purple .kpi-val{color:#8b5cf6;}
+.kpi.teal   .kpi-val{color:#06b6d4;}
+.kpi.red    .kpi-val{color:#f05252;}
+.kpi-sub{font-size:11px;color:var(--muted);}
+.kpi-chg{font-size:10px;margin-top:1px;}
+.kpi-chg.up{color:var(--up);}.kpi-chg.down{color:var(--down);}.kpi-chg.neu{color:var(--muted);}
 
-/* ─── SETUP BANNER ────────────────────────── */
-#setupBanner{background:linear-gradient(135deg,#2b6cb0,#2c7a7b);color:#fff;padding:10px 24px;display:flex;align-items:center;gap:10px;font-size:.75rem;cursor:pointer}
-#setupBanner.hidden{display:none}
-#setupBanner strong{font-weight:700}
+/* ── Card / Table ── */
+.card{background:var(--card);border-radius:10px;border:1px solid var(--border);margin-bottom:14px;overflow:hidden;}
+.card-hdr{padding:11px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-weight:700;font-size:13px;}
+.card-hint{font-size:11px;color:var(--muted);}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:#f0f4ff;padding:8px 10px;text-align:center;font-weight:600;
+  color:#1a56db;border-bottom:2px solid var(--border);white-space:nowrap;}
+thead th.grp{background:#1a56db;color:#fff;}
+thead th.met{text-align:left;background:#eef2ff;min-width:165px;
+  position:sticky;left:0;z-index:3;border-right:2px solid #c7d7f9;}
+tbody td{padding:6px 10px;border-bottom:1px solid #f0f0f0;text-align:center;white-space:nowrap;}
+tbody td.m{text-align:left;background:#fafbfe;position:sticky;left:0;z-index:2;
+  border-right:2px solid #e8eef8;font-weight:500;}
+tbody td .pct{color:var(--muted);font-size:10px;}
+tbody td .ch{display:block;font-size:10px;}
+tbody td .chu{color:var(--up);}
+tbody td .chd{color:var(--down);}
+tbody td .chn{color:var(--muted);}
+.sep-row td{background:#eef2ff!important;font-weight:700;font-size:11px;
+  color:#3730a3;padding:5px 10px;letter-spacing:.3px;}
+tr:nth-child(even) td{background:#fafbfe;}
+tr:nth-child(even) td.m{background:#f5f7ff;}
+tr:hover td{background:#eff6ff!important;}
+tr:hover td.m{background:#dbeafe!important;}
 
-/* ─── FOOTER ──────────────────────────────── */
-footer{text-align:center;padding:14px;color:#a0aec0;font-size:.65rem;border-top:1px solid #e2e8f0;margin-top:10px}
+/* ── Charts ── */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.chart-card{background:var(--card);border-radius:10px;border:1px solid var(--border);padding:15px;}
+.chart-title{font-weight:700;font-size:12px;margin-bottom:10px;color:var(--text);}
 
-/* scrollbar */
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-track{background:#f1f1f1}
-::-webkit-scrollbar-thumb{background:#cbd5e0;border-radius:10px}
+/* ── Modal ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+  z-index:1000;align-items:center;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal{background:#fff;border-radius:12px;padding:24px;max-width:540px;width:90%;}
+.modal h3{margin-bottom:10px;font-size:15px;}
+.modal p,.modal li{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:3px;}
+.modal ol{padding-left:18px;margin-bottom:14px;}
+.modal input{width:100%;border:1px solid var(--border);border-radius:6px;
+  padding:8px 12px;font-size:13px;margin-top:6px;margin-bottom:12px;}
+.modal .row{display:flex;gap:8px;justify-content:flex-end;}
+.btn-pri{background:var(--primary);color:#fff;border:none;padding:8px 18px;
+  border-radius:6px;cursor:pointer;font-size:13px;}
+.btn-sec{background:#fff;border:1px solid var(--border);color:var(--muted);
+  padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;}
+
+@media(max-width:1100px){.kpi-row{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:800px){.chart-grid{grid-template-columns:1fr;}.kpi-row{grid-template-columns:repeat(2,1fr);}
+  .container{padding:10px 12px;}.filter-bar{gap:5px;}}
 </style>
 </head>
 <body>
 
-<div id="loading"><div class="spinner"></div><p>Loading dashboard data…</p></div>
-
-<!-- Setup Banner -->
-<div id="setupBanner" onclick="document.getElementById('setupModal').style.display='flex'">
-  ⚡ <strong>Connect to live Google Sheets</strong> — click here for setup instructions &nbsp;›
+<!-- ── Header ─────────────────────────────────────────────────────────── -->
+<div class="header">
+  <div>
+    <h1>🏢 HUB Visit Dashboard</h1>
+    <div style="font-size:11px;opacity:.7;margin-top:2px;">Driver Acquisition · Hyderabad Operations</div>
+  </div>
+  <div class="header-right" id="hdrInfo">Loading...</div>
 </div>
 
-<!-- Header -->
-<header class="header">
-  <div>
-    <h1>🚗 HUB Visit Dashboard &nbsp;·&nbsp; Hyderabad Pilot Readiness</h1>
-    <p id="dataRange">Apr 2025 – Feb 2026 &nbsp;|&nbsp; 20,455 records</p>
-  </div>
-  <div class="header-right">
-    <span id="lastUpdated"></span>
-    <span class="badge">LIVE FILTERS</span>
-  </div>
-</header>
+<div class="status-bar" id="statusBar">⏳ Loading data...</div>
 
-<!-- Filter Bar -->
+<!-- ── Tabs bar ───────────────────────────────────────────────────────── -->
+<div class="tabs-bar">
+  <button class="tab-btn active" id="tabM" onclick="setView('monthly')">📅 Monthly</button>
+  <button class="tab-btn"        id="tabW" onclick="setView('weekly')" >📆 Weekly</button>
+  <button class="tab-btn"        id="tabD" onclick="setView('daily')"  >🗓 Daily</button>
+  <select class="period-sel" id="periodSel" onchange="onPeriodChange()"><option>Loading...</option></select>
+  <div class="tabs-right">
+    <button class="btn-sm" onclick="showModal()">🔗 Live Data</button>
+    <button class="btn-sm" onclick="exportCSV()">⬇ Export</button>
+  </div>
+</div>
+
+<!-- ── Filter bar ─────────────────────────────────────────────────────── -->
 <div class="filter-bar">
   <span class="filter-label">Filter:</span>
-  <div class="filter-group" id="fg-month"></div>
-  <div class="filter-group" id="fg-week_begin"></div>
-  <div class="filter-group" id="fg-Walkin_Location"></div>
-  <div class="filter-group" id="fg-channel"></div>
-  <div class="filter-group" id="fg-channel_category"></div>
-  <div class="filter-group" id="fg-Walkin Status"></div>
-  <div class="filter-group" id="fg-agent_username"></div>
-  <div class="filter-actions">
-    <div id="recordCount">Loading…</div>
-    <button class="clear-btn" onclick="clearAllFilters()">✕ Clear All</button>
+
+  <div class="filter-dd" id="ddMonth">
+    <select id="fMonth" onchange="onFilterChange('month')">
+      <option value="">Month</option>
+    </select>
+    <div class="badge" id="badgeMonth">1</div>
+  </div>
+
+  <div class="filter-dd" id="ddWeek">
+    <select id="fWeek" onchange="onFilterChange('week')">
+      <option value="">Week Begin</option>
+    </select>
+    <div class="badge" id="badgeWeek">1</div>
+  </div>
+
+  <div class="filter-dd" id="ddLoc">
+    <select id="fLoc" onchange="onFilterChange('loc')">
+      <option value="">Location</option>
+    </select>
+    <div class="badge" id="badgeLoc">1</div>
+  </div>
+
+  <div class="filter-dd" id="ddCh">
+    <select id="fCh" onchange="onFilterChange('ch')">
+      <option value="">Channel</option>
+    </select>
+    <div class="badge" id="badgeCh">1</div>
+  </div>
+
+  <div class="filter-dd" id="ddChCat">
+    <select id="fChCat" onchange="onFilterChange('chcat')">
+      <option value="">Ch.Cat</option>
+    </select>
+    <div class="badge" id="badgeChCat">1</div>
+  </div>
+
+  <div class="filter-dd" id="ddStatus">
+    <select id="fStatus" onchange="onFilterChange('status')">
+      <option value="">Status</option>
+      <option value="fresh">Fresh</option>
+      <option value="spill">Spill Over</option>
+    </select>
+    <div class="badge" id="badgeStatus">1</div>
+  </div>
+
+  <div class="filter-dd" id="ddAgent">
+    <select id="fAgent" onchange="onFilterChange('agent')">
+      <option value="">Agent</option>
+    </select>
+    <div class="badge" id="badgeAgent">1</div>
+  </div>
+
+  <div class="records-count" id="recordsCount">– records</div>
+  <button class="clear-btn" onclick="clearFilters()">✕ Clear All</button>
+</div>
+
+<!-- ── Main ───────────────────────────────────────────────────────────── -->
+<div class="container">
+
+  <!-- KPIs -->
+  <div class="kpi-row" id="kpiRow">
+    <div class="kpi blue" ><div class="kpi-title">Total Walk-ins</div><div class="kpi-val">–</div><div class="kpi-sub">Walk-in records</div></div>
+    <div class="kpi green"><div class="kpi-title">Unique Drivers</div><div class="kpi-val">–</div><div class="kpi-sub">Unique employees</div></div>
+    <div class="kpi orange"><div class="kpi-title">Allocation Rate</div><div class="kpi-val">–</div><div class="kpi-sub">of unique walk-ins</div></div>
+    <div class="kpi purple"><div class="kpi-title">Fresh Walk-ins</div><div class="kpi-val">–</div><div class="kpi-sub">% of total</div></div>
+    <div class="kpi teal"><div class="kpi-title">Returning</div><div class="kpi-val">–</div><div class="kpi-sub">Previous week visits</div></div>
+    <div class="kpi red"><div class="kpi-title">Not Yet Allotted</div><div class="kpi-val">–</div><div class="kpi-sub">Pending allocation</div></div>
+  </div>
+
+  <!-- Metrics table -->
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-title" id="tblTitle">Metrics by Location</div>
+      <div class="card-hint">▲▼ vs previous period &nbsp;·&nbsp; Scroll right →</div>
+    </div>
+    <div class="table-wrap"><table id="tbl"><tr><td style="padding:20px;color:var(--muted)">Loading...</td></tr></table></div>
+  </div>
+
+  <!-- Charts row 1 -->
+  <div class="chart-grid">
+    <div class="chart-card"><div class="chart-title">📈 Unique Walk-in Trend by Location</div><canvas id="cTrend" height="200"></canvas></div>
+    <div class="chart-card"><div class="chart-title">📡 Channel Source Breakdown</div><canvas id="cChannel" height="200"></canvas></div>
+    <div class="chart-card"><div class="chart-title">🔄 Conversion Funnel</div><canvas id="cFunnel" height="200"></canvas></div>
+    <div class="chart-card"><div class="chart-title">🏆 Top 10 OB Agents</div><canvas id="cAgents" height="200"></canvas></div>
+  </div>
+  <!-- Charts row 2 — Telecaller -->
+  <div class="chart-grid" style="grid-template-columns:1fr 1fr;">
+    <div class="chart-card" style="grid-column:1/-1;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="chart-title" style="margin-bottom:0;">📞 Top Telecallers (before Walk-in)</div>
+        <div style="font-size:11px;color:var(--muted);">Un-Mapped = no telecaller recorded · showing top 15</div>
+      </div>
+      <canvas id="cTelecaller" height="110"></canvas>
+    </div>
   </div>
 </div>
 
-<!-- Main -->
-<main class="main">
-  <!-- KPIs -->
-  <div class="kpi-grid">
-    <div class="kpi-card"><div class="kpi-lbl">Total Walk-ins</div><div class="kpi-val" id="kpi-total">–</div><div class="kpi-sub" id="kpi-total-sub">–</div></div>
-    <div class="kpi-card green"><div class="kpi-lbl">Unique Drivers</div><div class="kpi-val" id="kpi-drivers">–</div><div class="kpi-sub">Unique employees</div></div>
-    <div class="kpi-card orange"><div class="kpi-lbl">Allocation Rate</div><div class="kpi-val" id="kpi-rate">–</div><div class="kpi-sub" id="kpi-rate-sub">–</div></div>
-    <div class="kpi-card purple"><div class="kpi-lbl">Fresh Walk-ins</div><div class="kpi-val" id="kpi-fresh">–</div><div class="kpi-sub" id="kpi-fresh-sub">–</div></div>
-    <div class="kpi-card teal"><div class="kpi-lbl">Returning</div><div class="kpi-val" id="kpi-return">–</div><div class="kpi-sub">Previous week visits</div></div>
-    <div class="kpi-card red"><div class="kpi-lbl">Not Yet Allotted</div><div class="kpi-val" id="kpi-notalloc">–</div><div class="kpi-sub">Pending allocation</div></div>
-  </div>
-
-  <!-- Row 1: Trend + Channel Cat -->
-  <div class="chart-row cols-2-1">
-    <div class="chart-card">
-      <div class="chart-title"><span class="dot" style="background:#3182ce"></span>Walk-in Trend by Month</div>
-      <div class="chart-wrap"><canvas id="c-monthly"></canvas></div>
+<!-- ── Modal ──────────────────────────────────────────────────────────── -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h3>🔗 Connect Live Google Sheets</h3>
+    <p>Deploy a Google Apps Script Web App from your Google Sheet:</p>
+    <ol>
+      <li>Open Google Sheet → Extensions → Apps Script</li>
+      <li>Paste the Apps Script web app code, save it</li>
+      <li>Deploy → New Deployment → Web App → Execute as Me → Anyone → Deploy</li>
+      <li>Copy the Web App URL and paste below</li>
+    </ol>
+    <p>Web App URL:</p>
+    <input id="scriptUrl" placeholder="https://script.google.com/macros/s/.../exec" />
+    <div class="row">
+      <button class="btn-sec" onclick="clearScript()">🗑 Clear</button>
+      <button class="btn-sec" onclick="hideModal()">Cancel</button>
+      <button class="btn-pri" onclick="saveScript()">Connect</button>
     </div>
-    <div class="chart-card">
-      <div class="chart-title"><span class="dot" style="background:#805ad5"></span>Channel Category</div>
-      <div class="chart-wrap"><canvas id="c-chcat"></canvas></div>
-    </div>
-  </div>
-
-  <!-- Row 2: Location + Status -->
-  <div class="chart-row cols-2">
-    <div class="chart-card">
-      <div class="chart-title"><span class="dot" style="background:#319795"></span>Walk-ins by Location (Monthly)</div>
-      <div class="chart-wrap"><canvas id="c-location"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title"><span class="dot" style="background:#dd6b20"></span>Fresh vs Returning Walk-ins</div>
-      <div class="chart-wrap"><canvas id="c-status"></canvas></div>
-    </div>
-  </div>
-
-  <!-- Row 3: Channels + Funnel -->
-  <div class="chart-row cols-2">
-    <div class="chart-card">
-      <div class="chart-title"><span class="dot" style="background:#3182ce"></span>Top 10 Channels / Sources</div>
-      <div class="chart-wrap tall"><canvas id="c-channels"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title"><span class="dot" style="background:#38a169"></span>Conversion Funnel</div>
-      <div class="chart-wrap tall"><canvas id="c-funnel"></canvas></div>
-    </div>
-  </div>
-
-  <!-- Row 4: Reasons + Agents -->
-  <div class="chart-row cols-2">
-    <div class="chart-card">
-      <div class="chart-title"><span class="dot" style="background:#e53e3e"></span>Top Reasons for Not Joining</div>
-      <div class="chart-wrap tall"><canvas id="c-reasons"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title"><span class="dot" style="background:#805ad5"></span>Top 10 Agents</div>
-      <div class="chart-wrap tall"><canvas id="c-agents"></canvas></div>
-    </div>
-  </div>
-</main>
-
-<footer>HUB Visit Dashboard &nbsp;|&nbsp; Source: Pilot_Readiness_HYD_2.0 &nbsp;|&nbsp; <span id="footerUpdated"></span></footer>
-
-<!-- Setup Modal -->
-<div id="setupModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:14px;padding:28px;max-width:580px;width:90%;max-height:90vh;overflow-y:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <h2 style="font-size:1rem;font-weight:800">⚡ Connect to Live Google Sheets</h2>
-      <button onclick="document.getElementById('setupModal').style.display='none'" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#718096">✕</button>
-    </div>
-    <p style="font-size:.78rem;color:#4a5568;margin-bottom:16px">Follow these steps to connect your Google Sheet so the dashboard auto-updates daily:</p>
-    <div style="background:#f7fafc;border-radius:10px;padding:16px;font-size:.75rem;line-height:1.8;color:#2d3748">
-      <strong>Step 1</strong> — Open your Google Sheet:<br>
-      <a href="https://docs.google.com/spreadsheets/d/1110lUnF5gmR_-rwu3_LD_r4PlJPI8p31eStj-PUS9ns" target="_blank" style="color:#3182ce;word-break:break-all">https://docs.google.com/spreadsheets/d/1110lUnF5gmR_...</a><br><br>
-      <strong>Step 2</strong> — Click <b>Extensions → Apps Script</b><br><br>
-      <strong>Step 3</strong> — Delete any existing code and paste this:<br>
-    </div>
-    <pre style="background:#1a202c;color:#a0aec0;border-radius:8px;padding:14px;font-size:.68rem;overflow-x:auto;margin:10px 0;line-height:1.6">function doGet(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName('Hub_visit');
-  var data = sheet.getDataRange().getValues();
-  var headers = data[0];
-  var rows = data.slice(1).map(function(r) {
-    var o = {};
-    headers.forEach(function(h,i){ o[h] = r[i]; });
-    return o;
-  });
-  return ContentService
-    .createTextOutput(JSON.stringify({data:rows, updated:new Date().toISOString()}))
-    .setMimeType(ContentService.MimeType.JSON);
-}</pre>
-    <div style="background:#f7fafc;border-radius:10px;padding:16px;font-size:.75rem;line-height:1.8;color:#2d3748">
-      <strong>Step 4</strong> — Click <b>Deploy → New Deployment</b><br>
-      &nbsp;&nbsp;• Type: <b>Web App</b><br>
-      &nbsp;&nbsp;• Execute as: <b>Me</b><br>
-      &nbsp;&nbsp;• Who has access: <b>Anyone</b><br>
-      &nbsp;&nbsp;• Click <b>Deploy</b> → Copy the Web App URL<br><br>
-      <strong>Step 5</strong> — Paste the URL below and click Connect:
-    </div>
-    <div style="display:flex;gap:8px;margin-top:10px">
-      <input id="scriptUrl" type="text" placeholder="https://script.google.com/macros/s/..." style="flex:1;border:1.5px solid #cbd5e0;border-radius:8px;padding:8px 12px;font-size:.75rem;outline:none">
-      <button onclick="connectScript()" style="background:#3182ce;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:.75rem;font-weight:700;cursor:pointer">Connect</button>
-    </div>
-    <p style="font-size:.68rem;color:#a0aec0;margin-top:8px">⚠️ Make sure the sheet tab is named exactly <b>Hub_visit</b></p>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════
-// CONFIG — paste your Apps Script URL here to enable live data
-// ═══════════════════════════════════════════════
-const APPS_SCRIPT_URL = localStorage.getItem('hubDashScriptUrl') || '';
-
-// Column indices in row array
-const C = {
-  date:0, loc:1, ch:2, chcat:3, agent:4, ws:5, reason:6,
-  empid:7, alloc:8, doc:9, sd:10, train:11, contract:12, dtpass:13,
-  month:14, week:15
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Constants
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const LOC_ALL  = ["Hyderabad","Damaigudda","Nagole Dost","Hyderabad-DriveToOwn"];
+const LOC_COLS = ["Overall",...LOC_ALL];
+const LOC_COLORS = {
+  Hyderabad:"#1a56db", Damaigudda:"#0e9f6e",
+  "Nagole Dost":"#f59e0b", "Hyderabad-DriveToOwn":"#8b5cf6"
 };
-
-const COLORS = {
-  blue:'#3182CE', green:'#38A169', orange:'#DD6B20', purple:'#805AD5',
-  teal:'#319795', red:'#E53E3E', gray:'#718096',
-  palette:['#3182CE','#38A169','#DD6B20','#805AD5','#319795','#E53E3E',
-           '#4299E1','#68D391','#F6AD55','#B794F4','#38B2AC','#FC8181',
-           '#63B3ED','#9AE6B4','#FBD38D','#D6BCFA']
-};
-
-let DATA = null;       // {cats, rows}
-let filtered = [];     // filtered row indices
-let charts = {};
-let activeFilters = {};// {colKey: Set of selected indices}
-
-// ─── LOAD DATA ───────────────────────────────────────────────────
-async function loadData() {
-  try {
-    if (APPS_SCRIPT_URL) {
-      const res = await fetch(APPS_SCRIPT_URL);
-      const json = await res.json();
-      DATA = processRawData(json.data);
-      document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date(json.updated).toLocaleDateString();
-    } else {
-      const res = await fetch('./data.json');
-      DATA = await res.json();
-      document.getElementById('lastUpdated').textContent = 'Local data';
-    }
-    document.getElementById('loading').style.display = 'none';
-    init();
-  } catch(e) {
-    document.getElementById('loading').innerHTML = '<p style="color:#fc8181">Failed to load data. Please check the data.json file.</p>';
-    console.error(e);
-  }
-}
-
-// Process raw JSON from Apps Script into same compact format as data.json
-function processRawData(rawRows) {
-  // Build category maps
-  const catCols = ['Walkin_Location','channel','channel_category','agent_username',
-                   'Walkin Status','reason_for_not_joining'];
-  const cats = {};
-  catCols.forEach(col => {
-    const vals = [...new Set(rawRows.map(r => String(r[col]||'Unknown')))].sort();
-    cats[col] = vals;
-  });
-  // Month and week_begin (sorted chronologically)
-  const monthMap = {}, weekMap = {};
-  rawRows.forEach(r => {
-    const d = new Date(r['date']);
-    if (isNaN(d)) return;
-    const m = d.toLocaleDateString('en-US',{month:'short',year:'numeric'}).replace(',',' ');
-    // Monday of the week
-    const monday = new Date(d);
-    monday.setDate(d.getDate() - d.getDay() + (d.getDay()===0 ? -6 : 1));
-    const wl = monday.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).replace(/ /g,' ');
-    monthMap[m] = monthMap[m] || d.getTime();
-    weekMap[wl] = weekMap[wl] || monday.getTime();
-  });
-  cats['month']      = Object.entries(monthMap).sort((a,b)=>a[1]-b[1]).map(e=>e[0]);
-  cats['week_begin'] = Object.entries(weekMap).sort((a,b)=>a[1]-b[1]).map(e=>e[0]);
-
-  const isValid = v => v && String(v) !== 'NaT' && String(v) !== '';
-
-  const rows = rawRows.map(r => {
-    const d = new Date(r['date']);
-    if (isNaN(d)) return null;
-    const m = d.toLocaleDateString('en-US',{month:'short',year:'numeric'}).replace(',',' ');
-    const monday = new Date(d);
-    monday.setDate(d.getDate() - d.getDay() + (d.getDay()===0 ? -6 : 1));
-    const wl = monday.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).replace(/ /g,' ');
-    const mi = cats['month'].indexOf(m);
-    const wi = cats['week_begin'].indexOf(wl);
-
-    return [
-      d.toISOString().slice(0,10),
-      cats['Walkin_Location'].indexOf(String(r['Walkin_Location']||'Unknown')),
-      cats['channel'].indexOf(String(r['channel']||'Unknown')),
-      cats['channel_category'].indexOf(String(r['channel_category']||'Unknown')),
-      cats['agent_username'].indexOf(String(r['agent_username']||'Unknown')),
-      cats['Walkin Status'].indexOf(String(r['Walkin Status']||'Unknown')),
-      cats['reason_for_not_joining'].indexOf(String(r['reason_for_not_joining']||'Unknown')),
-      String(r['employee_id']||''),
-      r['Final Allocation'] && r['Final Allocation'] !== 'Not Yet Allotted' ? 1 : 0,
-      isValid(r['documentation_timestamp']) ? 1 : 0,
-      isValid(r['sd_timestamp']) ? 1 : 0,
-      isValid(r['Training Complete_timestamp']) ? 1 : 0,
-      isValid(r['Driver Contract Signed_timestamp']) ? 1 : 0,
-      isValid(r['Driving Test Pass_timestamp']) ? 1 : 0,
-      mi, wi
-    ];
-  }).filter(Boolean);
-
-  return {cats, rows};
-}
-
-function getWeek(d) {
-  const s = new Date(d.getFullYear(), 0, 1);
-  return Math.ceil(((d - s) / 86400000 + s.getDay() + 1) / 7);
-}
-
-// ─── INIT ─────────────────────────────────────────────────────────
-function init() {
-  buildFilters();
-  initCharts();
-  applyFilters();
-  document.addEventListener('click', e => {
-    if (!e.target.closest('.filter-group')) closeAllDropdowns();
-  });
-  const ts = new Date().toLocaleString();
-  document.getElementById('footerUpdated').textContent = 'Generated: ' + ts;
-}
-
-// ─── FILTER DROPDOWNS ─────────────────────────────────────────────
-const FILTER_CONFIG = [
-  {key:'month',       label:'Month',         short:'Month'},
-  {key:'week_begin',   label:'Week Begin',     short:'Week Begin'},
-  {key:'Walkin_Location', label:'Location / Hub',short:'Location'},
-  {key:'channel',     label:'Source / Channel',  short:'Channel'},
-  {key:'channel_category',label:'Channel Category',short:'Ch.Cat'},
-  {key:'Walkin Status',   label:'Walkin Status',  short:'Status'},
-  {key:'agent_username',  label:'Agent',          short:'Agent'},
+const PALETTE = ["#1a56db","#0e9f6e","#f59e0b","#8b5cf6","#ef4444","#06b6d4","#f97316","#6366f1","#ec4899","#14b8a6"];
+const METRICS = [
+  {key:"tw",    label:"Total Walk-ins"},
+  {key:"tu",    label:"Unique Walk-ins"},
+  {key:"fresh", label:"Fresh Walk-ins"},
+  {key:"spill", label:"Spill Over",            pct:"spill_pct"},
+  {sep:true,    label:"─── Funnel ───"},
+  {key:"doc",   label:"Doc Charges Paid",       pct:"doc_pct"},
+  {key:"sd",    label:"SD Paid",                pct:"sd_pct"},
+  {key:"train", label:"Training Done"},
+  {key:"contr", label:"Contract Signed"},
+  {key:"alloc", label:"Allocation",             pct:"alloc_pct"},
+  {sep:true,    label:"─── Drop-off ───"},
+  {key:"drop",  label:"Absolute Drop Off",      pct:"drop_pct"},
+  {key:"drop2", label:"Stalled (No Allocation)",pct:"drop2_pct"},
 ];
 
-function buildFilters() {
-  FILTER_CONFIG.forEach(fc => {
-    const vals = DATA.cats[fc.key] || [];
-    const el = document.getElementById('fg-'+fc.key);
-    if (!el) return;
-    activeFilters[fc.key] = new Set(vals.map((_,i)=>i)); // all selected
-    el.innerHTML = buildDropdownHTML(fc, vals);
-    setupDropdownEvents(el, fc.key, vals);
-  });
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// State
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let DATA = null;
+let view = "monthly";
+let selPeriod = null;
+let charts = {};
+// Active filter values
+let F = { month:"", week:"", loc:"", ch:"", chcat:"", status:"", agent:"" };
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Load data
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function init() {
+  const url = localStorage.getItem("hubScriptUrl");
+  if (url) {
+    try {
+      const r = await fetch(url + "?action=getData", {mode:"cors"});
+      const raw = await r.json();
+      const processed = processLive(raw);
+      if (processed) {
+        DATA = processed;
+        setStatus("✅ Live data connected from Google Sheets", true);
+        setupUI(); return;
+      }
+    } catch(e) { console.error(e); }
+    setStatus("⚠️ Live data failed — using local data_v2.json", false);
+  }
+  await loadLocal();
+}
+async function loadLocal() {
+  try {
+    const r = await fetch("data_v2.json");
+    if (!r.ok) throw new Error(r.status);
+    DATA = await r.json();
+    setStatus("📁 Local data loaded · Use 🔗 Live Data to connect Google Sheets", false);
+    setupUI();
+  } catch(e) {
+    document.getElementById("statusBar").className = "status-bar err";
+    setStatus("❌ data_v2.json not found — place it in the same folder as index.html", false);
+  }
+}
+function setStatus(msg, ok) {
+  const el = document.getElementById("statusBar");
+  el.textContent = msg;
+  el.className = "status-bar" + (ok ? " ok" : "");
 }
 
-function buildDropdownHTML(fc, vals) {
-  const options = vals.map((v,i) =>
-    `<div class="dd-option">
-      <input type="checkbox" id="cb-${fc.key}-${i}" value="${i}" checked onchange="onFilterChange('${fc.key}')">
-      <label for="cb-${fc.key}-${i}">${v||'(blank)'}</label>
-    </div>`
-  ).join('');
-  return `
-    <button class="filter-btn" onclick="toggleDropdown('${fc.key}')">
-      ${fc.short} <span class="cnt" id="cnt-${fc.key}" style="display:none">0</span> <span>▾</span>
-    </button>
-    <div class="dropdown-menu" id="dm-${fc.key}">
-      <div class="dd-search"><input type="text" placeholder="Search ${fc.label}..." oninput="searchFilter('${fc.key}',this.value)"></div>
-      <div class="dd-options" id="opts-${fc.key}">
-        <div class="dd-option dd-select-all">
-          <input type="checkbox" id="cb-${fc.key}-all" checked onchange="toggleAll('${fc.key}',this.checked)">
-          <label for="cb-${fc.key}-all">Select All</label>
-        </div>
-        ${options}
-      </div>
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Setup
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function setupUI() {
+  if (!DATA) return;
+  const last = DATA.days ? DATA.days[DATA.days.length-1] : "";
+  document.getElementById("hdrInfo").textContent = "Data through: " + last;
+  populateFilters();
+  setView("monthly");
+}
+function populateFilters() {
+  if (!DATA) return;
+  // Month
+  setOpts("fMonth", "Month", DATA.months || []);
+  // Week Begin
+  setOpts("fWeek", "Week Begin", DATA.weeks || []);
+  // Location
+  setOpts("fLoc", "Location", LOC_ALL);
+  // Channel — collect from ch_by_month across all months
+  const chs = new Set();
+  Object.values(DATA.ch_by_month || {}).forEach(m => Object.keys(m).forEach(c => chs.add(c)));
+  setOpts("fCh", "Channel", [...chs].sort());
+  // Ch.Cat — collect from lead_by_month
+  const cats = new Set();
+  Object.values(DATA.lead_by_month || {}).forEach(m => Object.keys(m).forEach(c => cats.add(c)));
+  setOpts("fChCat", "Ch.Cat", [...cats].sort());
+  // Agent
+  const ags = new Set();
+  Object.values(DATA.agent_by_month || {}).forEach(m =>
+    Object.keys(m).forEach(a => ags.add(a.replace(/_/g," "))));
+  setOpts("fAgent", "Agent", [...ags].sort());
+}
+function setOpts(id, placeholder, items) {
+  const el = document.getElementById(id);
+  el.innerHTML = `<option value="">${placeholder}</option>` +
+    items.map(x => `<option value="${x}">${x}</option>`).join("");
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Tab view control
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function setView(v) {
+  view = v;
+  ["M","W","D"].forEach((c,i) =>
+    document.getElementById("tab"+c).classList.toggle("active", ["monthly","weekly","daily"][i]===v));
+  populatePeriods();
+}
+function populatePeriods() {
+  if (!DATA) return;
+  const ps = getPeriods();
+  const sel = document.getElementById("periodSel");
+  sel.innerHTML = ps.map(p => `<option value="${p}">${p}</option>`).join("");
+  selPeriod = ps[ps.length-1];
+  sel.value = selPeriod;
+  render();
+}
+function getPeriods()  { return DATA ? (view==="monthly"?DATA.months:view==="weekly"?DATA.weeks:DATA.days||[]) : []; }
+function getByData()   { return DATA ? (view==="monthly"?DATA.by_month:view==="weekly"?DATA.by_week:DATA.by_day) : {}; }
+function onPeriodChange() { selPeriod = document.getElementById("periodSel").value; render(); }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Filter control
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const FILTER_MAP = {month:"fMonth",week:"fWeek",loc:"fLoc",ch:"fCh",chcat:"fChCat",status:"fStatus",agent:"fAgent"};
+const BADGE_MAP  = {month:"badgeMonth",week:"badgeWeek",loc:"badgeLoc",ch:"badgeCh",chcat:"badgeChCat",status:"badgeStatus",agent:"badgeAgent"};
+const DD_MAP     = {month:"ddMonth",week:"ddWeek",loc:"ddLoc",ch:"ddCh",chcat:"ddChCat",status:"ddStatus",agent:"ddAgent"};
+
+function onFilterChange(key) {
+  const val = document.getElementById(FILTER_MAP[key]).value;
+  F[key] = val;
+  // Update badge
+  const dd = document.getElementById(DD_MAP[key]);
+  dd.classList.toggle("active", val !== "");
+  // If month/week filter selected, jump the period selector
+  if (key === "month" && val) { setView("monthly"); jumpToPeriod(val); return; }
+  if (key === "week"  && val) { setView("weekly");  jumpToPeriod(val); return; }
+  render();
+}
+function jumpToPeriod(p) {
+  const sel = document.getElementById("periodSel");
+  if ([...sel.options].some(o => o.value === p)) {
+    sel.value = p; selPeriod = p;
+  }
+  render();
+}
+function clearFilters() {
+  Object.keys(F).forEach(k => { F[k] = ""; document.getElementById(FILTER_MAP[k]).value = ""; });
+  Object.keys(DD_MAP).forEach(k => document.getElementById(DD_MAP[k]).classList.remove("active"));
+  render();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Helpers
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function periodToMonth(p) {
+  if (view === "monthly") return p;
+  if (view === "weekly") { const pts = p.split(" "); if (pts.length===3) return pts[1]+" "+pts[2]; }
+  if (view === "daily") { const d = new Date(p+"T00:00:00"); if (!isNaN(d)) return MONTHS_SHORT[d.getMonth()]+" "+d.getFullYear(); }
+  const ms = DATA.months||[]; return ms[ms.length-1];
+}
+function fmtN(n) { return n!=null ? n.toLocaleString() : "–"; }
+function fmtChg(diff, pval) {
+  if (pval == null) return '<span class="ch chn">–</span>';
+  if (diff === 0)   return '<span class="ch chn">● 0</span>';
+  const p = pval>0 ? " ("+Math.abs(diff/pval*100).toFixed(1)+"%)" : "";
+  return diff>0
+    ? `<span class="ch chu">▲ +${Math.abs(diff).toLocaleString()}${p}</span>`
+    : `<span class="ch chd">▼ ${diff.toLocaleString()}${p}</span>`;
+}
+// Get active locations for display (apply loc filter)
+function getActiveLocs(cur) {
+  const filtered = F.loc ? [F.loc] : LOC_ALL;
+  return ["Overall", ...filtered.filter(l => cur[l] !== undefined)];
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Render
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function render() {
+  if (!DATA || !selPeriod) return;
+  const byData = getByData();
+  const ps = getPeriods();
+  const idx = ps.indexOf(selPeriod);
+  const prevP = idx > 0 ? ps[idx-1] : null;
+  const cur  = byData[selPeriod] || {};
+  const prev = prevP ? (byData[prevP] || {}) : null;
+  renderKPIs(cur, prev);
+  renderTable(cur, prev);
+  renderCharts(cur, ps, byData);
+  document.getElementById("tblTitle").textContent =
+    (view==="monthly"?"Monthly":view==="weekly"?"Weekly":"Daily")+" Metrics · "+selPeriod;
+  // Records count = tw from overall (apply status filter)
+  const o = cur.overall || {};
+  let recs = o.tw || 0;
+  if (F.status === "fresh")  recs = o.fresh || 0;
+  if (F.status === "spill")  recs = o.spill || 0;
+  document.getElementById("recordsCount").textContent = recs.toLocaleString() + " records";
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// KPI Cards
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function renderKPIs(cur, prev) {
+  // Apply location filter to KPI data source
+  const locKey = F.loc ? F.loc : "overall";
+  const o  = cur[locKey]  || cur.overall  || {};
+  const po = prev ? (prev[locKey] || prev.overall || {}) : null;
+
+  // Apply status filter
+  const tw    = F.status==="fresh" ? (o.fresh||0) : F.status==="spill" ? (o.spill||0) : (o.tw||0);
+  const tu    = o.tu    || 0;
+  const alloc = o.alloc || 0;
+  const fresh = o.fresh || 0;
+  const spill = o.spill || 0;
+  const drop  = o.drop  || 0;
+  const drop2 = o.drop2 || 0;
+  const allocPct = tu > 0 ? (alloc/tu*100).toFixed(1) : "0.0";
+  const freshPct = tw > 0 ? (fresh/tw*100).toFixed(1)  : "0.0";
+
+  function chg(key) {
+    if (!po) return "";
+    const v=o[key]||0, pv=po[key]||0, d=v-pv;
+    if (d===0) return '<div class="kpi-chg neu">● No change</div>';
+    const pct = pv>0 ? Math.abs(d/pv*100).toFixed(1) : null;
+    const cls = d>0?"up":"down", ar=d>0?"▲":"▼";
+    return `<div class="kpi-chg ${cls}">${ar} ${Math.abs(d).toLocaleString()}${pct?" ("+pct+"%)":""} vs prev</div>`;
+  }
+
+  document.getElementById("kpiRow").innerHTML = `
+    <div class="kpi blue">
+      <div class="kpi-title">Total Walk-ins</div>
+      <div class="kpi-val">${tw.toLocaleString()}</div>
+      <div class="kpi-sub">Walk-in records</div>
+      ${chg("tw")}
+    </div>
+    <div class="kpi green">
+      <div class="kpi-title">Unique Drivers</div>
+      <div class="kpi-val">${tu.toLocaleString()}</div>
+      <div class="kpi-sub">Unique employees</div>
+      ${chg("tu")}
+    </div>
+    <div class="kpi orange">
+      <div class="kpi-title">Allocation Rate</div>
+      <div class="kpi-val">${allocPct}%</div>
+      <div class="kpi-sub">${alloc.toLocaleString()} allocated</div>
+      ${chg("alloc")}
+    </div>
+    <div class="kpi purple">
+      <div class="kpi-title">Fresh Walk-ins</div>
+      <div class="kpi-val">${fresh.toLocaleString()}</div>
+      <div class="kpi-sub">${freshPct}% of total</div>
+      ${chg("fresh")}
+    </div>
+    <div class="kpi teal">
+      <div class="kpi-title">Returning</div>
+      <div class="kpi-val">${spill.toLocaleString()}</div>
+      <div class="kpi-sub">Previous week visits</div>
+      ${chg("spill")}
+    </div>
+    <div class="kpi red">
+      <div class="kpi-title">Not Yet Allotted</div>
+      <div class="kpi-val">${(tu-alloc).toLocaleString()}</div>
+      <div class="kpi-sub">${drop.toLocaleString()} cold · ${drop2.toLocaleString()} stalled</div>
     </div>`;
 }
 
-function setupDropdownEvents(el, key, vals) {}
-
-function toggleDropdown(key) {
-  const dm = document.getElementById('dm-'+key);
-  const isOpen = dm.classList.contains('open');
-  closeAllDropdowns();
-  if (!isOpen) {
-    dm.classList.add('open');
-    dm.previousElementSibling.classList.add('active');
-  }
-}
-
-function closeAllDropdowns() {
-  document.querySelectorAll('.dropdown-menu.open').forEach(d => {
-    d.classList.remove('open');
-    d.previousElementSibling.classList.remove('active');
-  });
-}
-
-function searchFilter(key, query) {
-  const opts = document.getElementById('opts-'+key);
-  opts.querySelectorAll('.dd-option:not(.dd-select-all)').forEach(el => {
-    const txt = el.querySelector('label').textContent.toLowerCase();
-    el.style.display = txt.includes(query.toLowerCase()) ? '' : 'none';
-  });
-}
-
-function toggleAll(key, checked) {
-  const vals = DATA.cats[key] || [];
-  document.querySelectorAll(`#opts-${key} input[type=checkbox]:not(#cb-${key}-all)`).forEach(cb => {
-    cb.checked = checked;
-  });
-  if (checked) activeFilters[key] = new Set(vals.map((_,i)=>i));
-  else activeFilters[key] = new Set();
-  updateFilterBadge(key, vals);
-  applyFilters();
-}
-
-function onFilterChange(key) {
-  const vals = DATA.cats[key] || [];
-  activeFilters[key] = new Set();
-  document.querySelectorAll(`#opts-${key} input[type=checkbox]:not(#cb-${key}-all)`).forEach(cb => {
-    if (cb.checked) activeFilters[key].add(Number(cb.value));
-  });
-  // update select-all state
-  const allCb = document.getElementById(`cb-${key}-all`);
-  if (allCb) allCb.checked = activeFilters[key].size === vals.length;
-  updateFilterBadge(key, vals);
-  applyFilters();
-}
-
-function updateFilterBadge(key, vals) {
-  const cnt = document.getElementById('cnt-'+key);
-  const sel = activeFilters[key].size;
-  if (cnt) {
-    if (sel === vals.length || sel === 0) { cnt.style.display='none'; }
-    else { cnt.style.display='inline'; cnt.textContent=sel; }
-  }
-}
-
-function clearAllFilters() {
-  FILTER_CONFIG.forEach(fc => {
-    const vals = DATA.cats[fc.key] || [];
-    activeFilters[fc.key] = new Set(vals.map((_,i)=>i));
-    document.querySelectorAll(`#opts-${fc.key} input[type=checkbox]`).forEach(cb => cb.checked=true);
-    updateFilterBadge(fc.key, vals);
-  });
-  applyFilters();
-}
-
-// ─── APPLY FILTERS ─────────────────────────────────────────────────
-// key→column index mapping
-const KEY_COL = {
-  'month': C.month, 'week_begin': C.week, 'Walkin_Location': C.loc,
-  'channel': C.ch, 'channel_category': C.chcat,
-  'Walkin Status': C.ws, 'agent_username': C.agent
-};
-
-function applyFilters() {
-  filtered = DATA.rows.filter(row => {
-    for (const fc of FILTER_CONFIG) {
-      const col = KEY_COL[fc.key];
-      if (col === undefined) continue;
-      if (!activeFilters[fc.key].has(row[col])) return false;
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Metrics Table
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function renderTable(cur, prev) {
+  const activeLocs = getActiveLocs(cur);
+  let h = "<thead><tr><th class='met'>Metric</th>";
+  activeLocs.forEach(l => h += `<th colspan="2" class="grp">${l}</th>`);
+  h += "</tr><tr><th class='met'></th>";
+  activeLocs.forEach(() => h += "<th>Value</th><th>vs Prev</th>");
+  h += "</tr></thead><tbody>";
+  METRICS.forEach(m => {
+    if (m.sep) {
+      h += `<tr class="sep-row"><td class="m">${m.label}</td>`;
+      activeLocs.forEach(() => h += "<td></td><td></td>");
+      h += "</tr>"; return;
     }
-    return true;
+    h += "<tr>";
+    h += `<td class="m">${m.label}${m.pct?'<span class="pct"> (%)</span>':""}`;
+    h += "</td>";
+    activeLocs.forEach(l => {
+      const key = l==="Overall" ? "overall" : l;
+      const cv = cur[key]||{}, pv = prev?(prev[key]||{}):null;
+      const val = cv[m.key]||0, pval = pv?(pv[m.key]||0):null;
+      let vs = fmtN(val);
+      if (m.pct && cv[m.pct]!=null) vs += `<span class="pct"> (${cv[m.pct]}%)</span>`;
+      h += `<td>${vs}</td>`;
+      h += `<td>${fmtChg(pval!=null?val-pval:null, pval)}</td>`;
+    });
+    h += "</tr>";
   });
-  updateKPIs();
-  updateAllCharts();
-  document.getElementById('recordCount').textContent = `📊 ${filtered.length.toLocaleString()} records`;
+  h += "</tbody>";
+  document.getElementById("tbl").innerHTML = h;
 }
 
-// ─── KPIs ──────────────────────────────────────────────────────────
-function updateKPIs() {
-  const total = filtered.length;
-  const unique = new Set(filtered.map(r=>r[C.empid])).size;
-  const allocated = filtered.filter(r=>r[C.alloc]).length;
-  const fresh = filtered.filter(r=>DATA.cats['Walkin Status'][r[C.ws]]==='Fresh Walkin').length;
-  const returning = filtered.filter(r=>DATA.cats['Walkin Status'][r[C.ws]]==='Previous week walkin').length;
-  const notAlloc = total - allocated;
-  const rate = total ? (allocated/total) : 0;
-
-  setText('kpi-total', fmt(total));
-  setText('kpi-total-sub', 'Walk-in records');
-  setText('kpi-drivers', fmt(unique));
-  setText('kpi-rate', (rate*100).toFixed(1)+'%');
-  setText('kpi-rate-sub', fmt(allocated)+' allocated');
-  setText('kpi-fresh', fmt(fresh));
-  setText('kpi-fresh-sub', total ? (fresh/total*100).toFixed(1)+'% of total' : '–');
-  setText('kpi-return', fmt(returning));
-  setText('kpi-notalloc', fmt(notAlloc));
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Charts
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function dc(id) { if(charts[id]){charts[id].destroy();delete charts[id];} }
+function renderCharts(cur, ps, byData) {
+  renderTrend(ps, byData);
+  renderChannel();
+  renderFunnel(cur);
+  renderAgents();
+  renderTelecaller();
 }
-
-function setText(id, val) { const el=document.getElementById(id); if(el) el.textContent=val; }
-function fmt(n) { return n.toLocaleString(); }
-
-// ─── CHARTS ────────────────────────────────────────────────────────
-function initCharts() {
-  const base = {
-    responsive:true, maintainAspectRatio:true,
-    plugins:{legend:{labels:{font:{family:'Segoe UI',size:11},boxWidth:12}},
-             tooltip:{callbacks:{label:ctx=>' '+ctx.parsed.y?.toLocaleString()||' '+ctx.parsed?.toLocaleString()||' '+ctx.parsed.x?.toLocaleString()}}}
-  };
-
-  charts.monthly = new Chart(document.getElementById('c-monthly'), {
-    type:'line',
-    data:{labels:[],datasets:[{label:'Walk-ins',data:[],borderColor:COLORS.blue,backgroundColor:'rgba(49,130,206,.1)',fill:true,tension:.4,pointRadius:4,pointHoverRadius:6,borderWidth:2.5}]},
-    options:{...base,plugins:{...base.plugins,legend:{display:false}},
-      scales:{y:{beginAtZero:true,grid:{color:'#edf2f7'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:10}}}}}
-  });
-
-  charts.chcat = new Chart(document.getElementById('c-chcat'), {
-    type:'doughnut',
-    data:{labels:[],datasets:[{data:[],backgroundColor:[COLORS.blue,COLORS.green,COLORS.orange,COLORS.purple],borderWidth:2,borderColor:'#fff'}]},
-    options:{...base,cutout:'60%',plugins:{...base.plugins,legend:{position:'bottom',labels:{font:{size:10},boxWidth:10,padding:10}}}}
-  });
-
-  charts.location = new Chart(document.getElementById('c-location'), {
-    type:'bar',
-    data:{labels:[],datasets:[]},
-    options:{...base,scales:{x:{stacked:false,grid:{display:false},ticks:{font:{size:10}}},y:{beginAtZero:true,grid:{color:'#edf2f7'},ticks:{font:{size:10}}}}}
-  });
-
-  charts.status = new Chart(document.getElementById('c-status'), {
-    type:'bar',
-    data:{labels:[],datasets:[]},
-    options:{...base,scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,beginAtZero:true,grid:{color:'#edf2f7'},ticks:{font:{size:10}}}}}
-  });
-
-  charts.channels = new Chart(document.getElementById('c-channels'), {
-    type:'bar',
-    data:{labels:[],datasets:[{label:'Walk-ins',data:[],backgroundColor:COLORS.palette,borderRadius:4}]},
-    options:{...base,indexAxis:'y',plugins:{...base.plugins,legend:{display:false}},
-      scales:{x:{beginAtZero:true,grid:{color:'#edf2f7'},ticks:{font:{size:10}}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
-  });
-
-  charts.funnel = new Chart(document.getElementById('c-funnel'), {
-    type:'bar',
-    data:{labels:[],datasets:[{label:'Count',data:[],backgroundColor:[COLORS.blue,COLORS.teal,COLORS.green,COLORS.purple,COLORS.orange,COLORS.red],borderRadius:4}]},
-    options:{...base,indexAxis:'y',plugins:{...base.plugins,legend:{display:false}},
-      scales:{x:{beginAtZero:true,grid:{color:'#edf2f7'},ticks:{font:{size:10}}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
-  });
-
-  charts.reasons = new Chart(document.getElementById('c-reasons'), {
-    type:'bar',
-    data:{labels:[],datasets:[{label:'Count',data:[],backgroundColor:COLORS.red+'cc',borderRadius:4}]},
-    options:{...base,indexAxis:'y',plugins:{...base.plugins,legend:{display:false}},
-      scales:{x:{beginAtZero:true,grid:{color:'#edf2f7'},ticks:{font:{size:10}}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
-  });
-
-  charts.agents = new Chart(document.getElementById('c-agents'), {
-    type:'bar',
-    data:{labels:[],datasets:[{label:'Walk-ins',data:[],backgroundColor:COLORS.purple+'cc',borderRadius:4}]},
-    options:{...base,indexAxis:'y',plugins:{...base.plugins,legend:{display:false}},
-      scales:{x:{beginAtZero:true,grid:{color:'#edf2f7'},ticks:{font:{size:10}}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
+function renderTrend(ps, byData) {
+  dc("cTrend");
+  const locsToShow = F.loc ? [F.loc] : LOC_ALL;
+  const maxPts = view==="daily"?60:view==="weekly"?20:12;
+  const labels = ps.slice(-maxPts);
+  const datasets = locsToShow.map(loc => ({
+    label: loc,
+    data: labels.map(p => (byData[p]||{})[loc]?.tu||0),
+    borderColor: LOC_COLORS[loc],
+    backgroundColor: LOC_COLORS[loc]+"22",
+    tension:.3, fill:false,
+    pointRadius: labels.length>30?0:3,
+  })).filter(ds => ds.data.some(v=>v>0));
+  charts["cTrend"] = new Chart(document.getElementById("cTrend"), {
+    type:"line", data:{labels, datasets},
+    options:{responsive:true, plugins:{legend:{position:"bottom",labels:{boxWidth:10,font:{size:10}}}},
+      scales:{x:{ticks:{maxTicksLimit:10,font:{size:10}}},y:{beginAtZero:true,ticks:{font:{size:10}}}}}
   });
 }
-
-function updateAllCharts() {
-  updateMonthly();
-  updateChCat();
-  updateLocation();
-  updateStatus();
-  updateChannels();
-  updateFunnel();
-  updateReasons();
-  updateAgents();
-}
-
-// count helper
-function countBy(rows, colIdx) {
-  const m = {};
-  rows.forEach(r => {
-    const k = r[colIdx];
-    m[k] = (m[k]||0) + 1;
+function renderChannel() {
+  dc("cChannel");
+  const mkey = periodToMonth(selPeriod);
+  let raw = DATA.ch_by_month?.[mkey] || {};
+  // Filter by chcat if set (use lead_by_month as category proxy)
+  if (F.chcat) { raw = DATA.lead_by_month?.[mkey] || {}; }
+  // Filter to specific channel if set
+  if (F.ch) { const v=raw[F.ch]; raw = v ? {[F.ch]:v} : {}; }
+  const sorted = Object.entries(raw).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  if (!sorted.length) { dc("cChannel"); return; }
+  charts["cChannel"] = new Chart(document.getElementById("cChannel"), {
+    type:"doughnut",
+    data:{labels:sorted.map(x=>x[0]), datasets:[{data:sorted.map(x=>x[1]),backgroundColor:PALETTE,borderWidth:2}]},
+    options:{responsive:true, plugins:{legend:{position:"right",labels:{boxWidth:10,font:{size:10}}}}}
   });
-  return m;
 }
-
-function topN(map, cats, n=10, excludeUnknown=false) {
-  let entries = Object.entries(map)
-    .map(([k,v])=>({label:cats[Number(k)], val:v}))
-    .filter(e=>!excludeUnknown || e.label!=='Unknown');
-  entries.sort((a,b)=>b.val-a.val);
-  return entries.slice(0,n);
-}
-
-function updateMonthly() {
-  // Group by month (chronological)
-  const monthCats = DATA.cats['month'];
-  const byMonth = new Array(monthCats.length).fill(0);
-  filtered.forEach(r => { byMonth[r[C.month]] = (byMonth[r[C.month]]||0)+1; });
-  // Only show months with data
-  const labels=[], data=[];
-  byMonth.forEach((v,i)=>{ if(v>0){labels.push(monthCats[i]);data.push(v);} });
-  setChart(charts.monthly, labels, [{label:'Walk-ins',data,borderColor:COLORS.blue,backgroundColor:'rgba(49,130,206,.1)',fill:true,tension:.4,pointRadius:4,borderWidth:2.5}]);
-}
-
-function updateChCat() {
-  const m = countBy(filtered, C.chcat);
-  const top = topN(m, DATA.cats['channel_category']);
-  setChart(charts.chcat, top.map(e=>e.label), [{data:top.map(e=>e.val),backgroundColor:[COLORS.blue,COLORS.green,COLORS.orange,COLORS.purple,COLORS.teal,COLORS.red],borderWidth:2,borderColor:'#fff'}]);
-}
-
-function updateLocation() {
-  const monthCats = DATA.cats['month'];
-  const locCats   = DATA.cats['Walkin_Location'];
-  // Get top 3 locations by count
-  const locTotal = countBy(filtered, C.loc);
-  const top3Locs = topN(locTotal, locCats, 3, true).map(e=>locCats.indexOf(e.label));
-
-  const byMonthLoc = {};
-  filtered.forEach(r => {
-    if (!top3Locs.includes(r[C.loc])) return;
-    byMonthLoc[r[C.month]] = byMonthLoc[r[C.month]] || {};
-    byMonthLoc[r[C.month]][r[C.loc]] = (byMonthLoc[r[C.month]][r[C.loc]]||0)+1;
+function renderFunnel(cur) {
+  dc("cFunnel");
+  const locKey = F.loc ? F.loc : "overall";
+  const o = cur[locKey] || cur.overall || {};
+  const steps=[
+    {l:"Walk-ins",v:o.tw||0},{l:"Unique",v:o.tu||0},
+    {l:"Doc Paid",v:o.doc||0},{l:"SD Paid",v:o.sd||0},
+    {l:"Training",v:o.train||0},{l:"Contract",v:o.contr||0},
+    {l:"Allocated",v:o.alloc||0},
+  ];
+  const base=steps[0].v||1;
+  charts["cFunnel"] = new Chart(document.getElementById("cFunnel"), {
+    type:"bar",
+    data:{labels:steps.map(s=>s.l), datasets:[{
+      data:steps.map(s=>s.v),
+      backgroundColor:["#1a56db","#3b82f6","#0e9f6e","#10b981","#f59e0b","#8b5cf6","#6366f1"],
+      borderRadius:4
+    }]},
+    options:{responsive:true,indexAxis:"y",
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{
+        const p=(ctx.parsed.x/base*100).toFixed(1);
+        return ` ${ctx.parsed.x.toLocaleString()} (${p}%)`;
+      }}}},
+      scales:{x:{beginAtZero:true,ticks:{font:{size:10}}},y:{ticks:{font:{size:10}}}}}
   });
-  const months = [...new Set(filtered.map(r=>r[C.month]))].sort();
-  const labels = months.map(i=>monthCats[i]);
-  const locColors=[COLORS.blue,COLORS.green,COLORS.orange];
-  const datasets = top3Locs.map((li,ci)=>({
-    label: locCats[li],
-    data: months.map(mi=>(byMonthLoc[mi]||{})[li]||0),
-    backgroundColor: locColors[ci],
-    borderRadius:3
-  }));
-  setChart(charts.location, labels, datasets);
 }
-
-function updateStatus() {
-  const monthCats = DATA.cats['month'];
-  const wsCats    = DATA.cats['Walkin Status'];
-  const months = [...new Set(filtered.map(r=>r[C.month]))].sort();
-  const labels = months.map(i=>monthCats[i]);
-  const byMonthWS = {};
-  filtered.forEach(r => {
-    byMonthWS[r[C.month]] = byMonthWS[r[C.month]] || {};
-    byMonthWS[r[C.month]][r[C.ws]] = (byMonthWS[r[C.month]][r[C.ws]]||0)+1;
-  });
-  const datasets = wsCats.map((ws,wi)=>({
-    label:ws,
-    data:months.map(mi=>(byMonthWS[mi]||{})[wi]||0),
-    backgroundColor:wi===0?COLORS.teal:COLORS.purple,
-    borderRadius:3
-  }));
-  setChart(charts.status, labels, datasets);
-}
-
-function updateChannels() {
-  const m = countBy(filtered, C.ch);
-  const top = topN(m, DATA.cats['channel'], 10, true);
-  setChart(charts.channels, top.map(e=>e.label), [{label:'Walk-ins',data:top.map(e=>e.val),backgroundColor:COLORS.palette,borderRadius:4}]);
-  charts.channels.options.plugins.tooltip.callbacks.label = ctx => ' '+ctx.parsed.x.toLocaleString();
-  charts.channels.update();
-}
-
-function updateFunnel() {
-  const total    = filtered.length;
-  const doc      = filtered.filter(r=>r[C.doc]).length;
-  const dtpass   = filtered.filter(r=>r[C.dtpass]).length;
-  const contract = filtered.filter(r=>r[C.contract]).length;
-  const train    = filtered.filter(r=>r[C.train]).length;
-  const alloc    = filtered.filter(r=>r[C.alloc]).length;
-  const labels   = ['Total Walk-ins','Documentation','Driving Test Pass','Contract Signed','Training Complete','Allocated'];
-  const data     = [total,doc,dtpass,contract,train,alloc];
-  const bgColors = [COLORS.blue,COLORS.teal,COLORS.green,COLORS.purple,COLORS.orange,COLORS.red];
-  setChart(charts.funnel, labels, [{label:'Count',data,backgroundColor:bgColors,borderRadius:4}]);
-  charts.funnel.options.plugins.tooltip.callbacks.label = ctx => ' '+ctx.parsed.x.toLocaleString();
-  charts.funnel.update();
-}
-
-function updateReasons() {
-  const m = countBy(filtered, C.reason);
-  const top = topN(m, DATA.cats['reason_for_not_joining'], 12, true);
-  setChart(charts.reasons, top.map(e=>e.label.length>30?e.label.slice(0,28)+'…':e.label), [{label:'Count',data:top.map(e=>e.val),backgroundColor:COLORS.red+'bb',borderRadius:4}]);
-  charts.reasons.options.plugins.tooltip.callbacks.label = ctx => ' '+ctx.parsed.x.toLocaleString();
-  charts.reasons.update();
-}
-
-function updateAgents() {
-  const m = countBy(filtered, C.agent);
-  const top = topN(m, DATA.cats['agent_username'], 10, true);
-  const filteredTop = top.filter(e=>e.label && e.label!=='Unknown' && e.label.trim()!=='');
-  setChart(charts.agents, filteredTop.map(e=>e.label), [{label:'Walk-ins',data:filteredTop.map(e=>e.val),backgroundColor:COLORS.purple+'bb',borderRadius:4}]);
-  charts.agents.options.plugins.tooltip.callbacks.label = ctx => ' '+ctx.parsed.x.toLocaleString();
-  charts.agents.update();
-}
-
-function setChart(chart, labels, datasets) {
-  chart.data.labels = labels;
-  chart.data.datasets = datasets;
-  chart.update('none');
-}
-
-// ─── CONNECT APPS SCRIPT ──────────────────────────────────────────
-function connectScript() {
-  const url = document.getElementById('scriptUrl').value.trim();
-  if (!url || !url.startsWith('https://script.google.com')) {
-    alert('Please paste a valid Apps Script URL starting with https://script.google.com');
-    return;
+function renderAgents() {
+  dc("cAgents");
+  const mkey = periodToMonth(selPeriod);
+  let raw = DATA.agent_by_month?.[mkey] || {};
+  // Filter by agent if set
+  if (F.agent) {
+    const key = F.agent.replace(/ /g,"_");
+    const v = raw[key] || raw[F.agent];
+    raw = v ? {[F.agent]:v} : {};
   }
-  localStorage.setItem('hubDashScriptUrl', url);
-  document.getElementById('setupModal').style.display='none';
-  document.getElementById('loading').style.display='flex';
-  document.getElementById('loading').querySelector('p').textContent='Connecting to Google Sheets…';
-  location.reload();
+  const sorted = Object.entries(raw).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  if (!sorted.length) return;
+  charts["cAgents"] = new Chart(document.getElementById("cAgents"), {
+    type:"bar",
+    data:{labels:sorted.map(x=>x[0].replace(/_/g," ")),
+      datasets:[{data:sorted.map(x=>x[1]),backgroundColor:"#1a56db",borderRadius:4}]},
+    options:{responsive:true,indexAxis:"y",
+      plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,ticks:{font:{size:10}}},y:{ticks:{font:{size:10}}}}}
+  });
 }
 
-// ─── START ────────────────────────────────────────────────────────
-loadData();
+function renderTelecaller() {
+  dc("cTelecaller");
+  const mkey = periodToMonth(selPeriod);
+  const raw = DATA.tc_by_month?.[mkey] || {};
+  if (!Object.keys(raw).length) return;
+  // Sort: put Un-Mapped last, then sort rest by count desc
+  const mapped   = Object.entries(raw).filter(([k])=>k!=="Un-Mapped").sort((a,b)=>b[1]-a[1]).slice(0,14);
+  const unmapped = raw["Un-Mapped"] ? [["Un-Mapped", raw["Un-Mapped"]]] : [];
+  const sorted   = [...mapped, ...unmapped];
+  const colors   = sorted.map(([k])=> k==="Un-Mapped" ? "#9ca3af" : "#1a56db");
+  charts["cTelecaller"] = new Chart(document.getElementById("cTelecaller"), {
+    type:"bar",
+    data:{
+      labels: sorted.map(x=>x[0]),
+      datasets:[{
+        data: sorted.map(x=>x[1]),
+        backgroundColor: colors,
+        borderRadius: 4,
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>{
+          const total=Object.values(raw).reduce((a,b)=>a+b,0);
+          const p=(ctx.parsed.y/total*100).toFixed(1);
+          return ` ${ctx.parsed.y.toLocaleString()} walk-ins (${p}% of total)`;
+        }}}
+      },
+      scales:{
+        x:{ticks:{font:{size:10},maxRotation:35}},
+        y:{beginAtZero:true,ticks:{font:{size:10}}}
+      }
+    }
+  });
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Live data
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function processLive(raw) {
+  if (raw && raw.months && raw.by_month) return raw;
+  console.warn("Live data not in expected format — falling back to local");
+  return null;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Modal
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function showModal() { document.getElementById("modal").classList.add("show"); }
+function hideModal() { document.getElementById("modal").classList.remove("show"); }
+function saveScript() {
+  const u = document.getElementById("scriptUrl").value.trim();
+  if (!u) { alert("Please enter a URL"); return; }
+  localStorage.setItem("hubScriptUrl", u); hideModal(); init();
+}
+function clearScript() {
+  localStorage.removeItem("hubScriptUrl");
+  document.getElementById("scriptUrl").value = "";
+  hideModal(); loadLocal();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Export
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function exportCSV() {
+  if (!DATA) return;
+  const bd=getByData(), ps=getPeriods();
+  const rows=[["Period","Location","Walk-ins","Unique","Fresh","Spill","Spill%","Doc","Doc%","SD","SD%","Training","Contract","Alloc","Alloc%","Drop","Drop%"]];
+  ps.forEach(p => {
+    const d=bd[p]||{};
+    Object.entries(d).forEach(([loc,v]) => {
+      rows.push([p,loc,v.tw,v.tu,v.fresh,v.spill,v.spill_pct,v.doc,v.doc_pct,v.sd,v.sd_pct,v.train,v.contr,v.alloc,v.alloc_pct,v.drop,v.drop_pct]);
+    });
+  });
+  const a = document.createElement("a");
+  a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(rows.map(r=>r.join(",")).join("\n"));
+  a.download = "hub_export_"+selPeriod+".csv";
+  a.click();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Start
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+init();
 </script>
 </body>
 </html>
