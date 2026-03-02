@@ -1,513 +1,737 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>HUB Visit Dashboard – Hyderabad</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f0f4f8;
-      color: #2d3748;
-    }
-    header {
-      background: linear-gradient(135deg, #1a202c 0%, #2d3748 60%, #4a5568 100%);
-      color: white;
-      padding: 22px 32px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
-    }
-    header .title-block h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: 0.5px; }
-    header .title-block p { font-size: 0.82rem; color: #a0aec0; margin-top: 4px; }
-    header .badge {
-      background: #3182ce;
-      color: white;
-      border-radius: 20px;
-      padding: 6px 18px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>HUB Visit Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;color:#2d3748;font-size:13px}
 
-    .dashboard { padding: 24px 28px; }
+/* ─── HEADER ─────────────────────────────── */
+.header{background:linear-gradient(135deg,#1a202c,#2d3748);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.header h1{font-size:1.2rem;font-weight:700;letter-spacing:.3px}
+.header p{font-size:.72rem;color:#a0aec0;margin-top:2px}
+.header-right{display:flex;align-items:center;gap:10px}
+.badge{background:#3182ce;color:#fff;border-radius:20px;padding:4px 12px;font-size:.7rem;font-weight:700}
+#lastUpdated{font-size:.68rem;color:#a0aec0}
 
-    /* KPI Cards */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-      gap: 18px;
-      margin-bottom: 24px;
-    }
-    .kpi-card {
-      background: white;
-      border-radius: 14px;
-      padding: 20px 22px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
-      border-left: 5px solid #3182ce;
-      transition: transform 0.15s;
-    }
-    .kpi-card:hover { transform: translateY(-2px); }
-    .kpi-card.green  { border-left-color: #38a169; }
-    .kpi-card.orange { border-left-color: #dd6b20; }
-    .kpi-card.purple { border-left-color: #805ad5; }
-    .kpi-card.teal   { border-left-color: #319795; }
-    .kpi-card.red    { border-left-color: #e53e3e; }
-    .kpi-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #718096; font-weight: 600; }
-    .kpi-value { font-size: 2rem; font-weight: 800; color: #2d3748; margin: 6px 0 2px; }
-    .kpi-sub   { font-size: 0.75rem; color: #a0aec0; }
+/* ─── FILTER BAR ─────────────────────────── */
+.filter-bar{background:#fff;border-bottom:2px solid #e2e8f0;padding:10px 24px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;position:sticky;top:57px;z-index:99;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.filter-label{font-size:.68rem;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:.8px;white-space:nowrap}
+.filter-group{position:relative}
+.filter-btn{background:#f7fafc;border:1.5px solid #cbd5e0;border-radius:8px;padding:5px 10px;font-size:.72rem;color:#4a5568;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;font-weight:600;min-width:100px;justify-content:space-between;transition:all .15s}
+.filter-btn:hover,.filter-btn.active{border-color:#3182ce;background:#ebf8ff;color:#2b6cb0}
+.filter-btn .cnt{background:#3182ce;color:#fff;border-radius:10px;padding:1px 5px;font-size:.62rem;font-weight:700}
+.dropdown-menu{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1.5px solid #cbd5e0;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:200px;max-width:260px;z-index:200;overflow:hidden}
+.dropdown-menu.open{display:block}
+.dd-search{padding:8px;border-bottom:1px solid #edf2f7}
+.dd-search input{width:100%;border:1.5px solid #cbd5e0;border-radius:6px;padding:4px 8px;font-size:.72rem;outline:none}
+.dd-search input:focus{border-color:#3182ce}
+.dd-options{max-height:220px;overflow-y:auto}
+.dd-option{display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:pointer;transition:background .1s}
+.dd-option:hover{background:#f7fafc}
+.dd-option input[type=checkbox]{accent-color:#3182ce;width:13px;height:13px;flex-shrink:0}
+.dd-option label{cursor:pointer;font-size:.73rem;color:#2d3748;flex:1}
+.dd-select-all{border-bottom:1px solid #edf2f7;font-weight:700;color:#3182ce}
+.filter-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+#recordCount{font-size:.72rem;color:#4a5568;background:#f7fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:5px 10px;font-weight:600;white-space:nowrap}
+.clear-btn{background:#fff5f5;border:1.5px solid #fc8181;color:#c53030;border-radius:8px;padding:5px 12px;font-size:.72rem;font-weight:700;cursor:pointer;transition:all .15s}
+.clear-btn:hover{background:#fed7d7}
 
-    /* Chart grid */
-    .chart-grid {
-      display: grid;
-      gap: 20px;
-    }
-    .row-2 { grid-template-columns: 1fr 1fr; }
-    .row-3 { grid-template-columns: 1fr 1fr 1fr; }
-    .row-1 { grid-template-columns: 1fr; }
-    .row-2-1 { grid-template-columns: 2fr 1fr; }
-    .row-1-2 { grid-template-columns: 1fr 2fr; }
+/* ─── MAIN ────────────────────────────────── */
+.main{padding:18px 24px}
 
-    .card {
-      background: white;
-      border-radius: 14px;
-      padding: 22px 22px 18px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
-    }
-    .card-title {
-      font-size: 0.85rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: #4a5568;
-      margin-bottom: 16px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid #edf2f7;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .card-title .dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      display: inline-block;
-    }
-    .dot-blue   { background: #3182ce; }
-    .dot-green  { background: #38a169; }
-    .dot-orange { background: #dd6b20; }
-    .dot-purple { background: #805ad5; }
-    .dot-teal   { background: #319795; }
-    .dot-red    { background: #e53e3e; }
+/* ─── KPI ─────────────────────────────────── */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px}
+.kpi-card{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 6px rgba(0,0,0,.07);border-left:4px solid #3182ce;transition:transform .15s}
+.kpi-card:hover{transform:translateY(-1px)}
+.kpi-card.green{border-left-color:#38a169}
+.kpi-card.orange{border-left-color:#dd6b20}
+.kpi-card.purple{border-left-color:#805ad5}
+.kpi-card.teal{border-left-color:#319795}
+.kpi-card.red{border-left-color:#e53e3e}
+.kpi-lbl{font-size:.63rem;text-transform:uppercase;letter-spacing:.8px;color:#718096;font-weight:700}
+.kpi-val{font-size:1.6rem;font-weight:800;color:#2d3748;margin:4px 0 2px;line-height:1}
+.kpi-sub{font-size:.65rem;color:#a0aec0}
 
-    canvas { max-height: 300px; }
-    .canvas-tall { max-height: 360px; }
+/* ─── CHARTS ──────────────────────────────── */
+.chart-section-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#fff;background:#4a5568;padding:6px 14px;border-radius:6px;margin:14px 0 10px;display:inline-block}
+.chart-row{display:grid;gap:14px;margin-bottom:14px}
+.cols-2{grid-template-columns:1fr 1fr}
+.cols-3{grid-template-columns:1fr 1fr 1fr}
+.cols-2-1{grid-template-columns:2fr 1fr}
+.cols-1-2{grid-template-columns:1fr 2fr}
+.chart-card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 6px rgba(0,0,0,.07)}
+.chart-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#4a5568;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #edf2f7;display:flex;align-items:center;gap:6px}
+.chart-title .dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+.chart-wrap{position:relative}
+.chart-wrap canvas{max-height:260px}
+.chart-wrap.tall canvas{max-height:320px}
+.no-data{display:flex;align-items:center;justify-content:center;height:200px;color:#a0aec0;font-size:.85rem;font-style:italic}
 
-    /* Funnel */
-    .funnel-wrap {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      padding: 6px 0;
-    }
-    .funnel-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .funnel-label {
-      width: 160px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: #4a5568;
-      flex-shrink: 0;
-      text-align: right;
-    }
-    .funnel-bar-wrap {
-      flex: 1;
-      background: #edf2f7;
-      border-radius: 30px;
-      height: 30px;
-      overflow: hidden;
-    }
-    .funnel-bar {
-      height: 100%;
-      border-radius: 30px;
-      display: flex;
-      align-items: center;
-      padding-left: 10px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: white;
-      transition: width 0.6s ease;
-    }
-    .funnel-pct {
-      width: 52px;
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: #2d3748;
-      flex-shrink: 0;
-    }
+/* ─── LOADING ─────────────────────────────── */
+#loading{position:fixed;inset:0;background:rgba(26,32,44,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;color:#fff;gap:14px}
+.spinner{width:44px;height:44px;border:4px solid rgba(255,255,255,.2);border-top-color:#3182ce;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading p{font-size:.85rem;color:#a0aec0}
 
-    /* Location pills */
-    .loc-pills {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 14px;
-    }
-    .pill {
-      background: #ebf8ff;
-      color: #2b6cb0;
-      border-radius: 20px;
-      padding: 4px 12px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.3px;
-    }
+/* ─── SETUP BANNER ────────────────────────── */
+#setupBanner{background:linear-gradient(135deg,#2b6cb0,#2c7a7b);color:#fff;padding:10px 24px;display:flex;align-items:center;gap:10px;font-size:.75rem;cursor:pointer}
+#setupBanner.hidden{display:none}
+#setupBanner strong{font-weight:700}
 
-    .section-gap { margin-top: 20px; }
-    footer {
-      text-align: center;
-      padding: 18px;
-      color: #a0aec0;
-      font-size: 0.72rem;
-    }
-  </style>
+/* ─── FOOTER ──────────────────────────────── */
+footer{text-align:center;padding:14px;color:#a0aec0;font-size:.65rem;border-top:1px solid #e2e8f0;margin-top:10px}
+
+/* scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:#f1f1f1}
+::-webkit-scrollbar-thumb{background:#cbd5e0;border-radius:10px}
+</style>
 </head>
 <body>
 
-<header>
-  <div class="title-block">
-    <h1>🚗 HUB Visit Dashboard</h1>
-    <p>Hyderabad Pilot Readiness · Apr 2025 – Feb 2026</p>
-  </div>
-  <div class="badge">LIVE DATA</div>
-</header>
+<div id="loading"><div class="spinner"></div><p>Loading dashboard data…</p></div>
 
-<div class="dashboard">
-
-  <!-- KPI Cards -->
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <div class="kpi-label">Total Walk-ins</div>
-      <div class="kpi-value">20,455</div>
-      <div class="kpi-sub">Apr 2025 – Feb 2026</div>
-    </div>
-    <div class="kpi-card green">
-      <div class="kpi-label">Unique Drivers</div>
-      <div class="kpi-value">12,369</div>
-      <div class="kpi-sub">Unique employee IDs</div>
-    </div>
-    <div class="kpi-card orange">
-      <div class="kpi-label">Allocation Rate</div>
-      <div class="kpi-value">60.4%</div>
-      <div class="kpi-sub">12,351 allocated</div>
-    </div>
-    <div class="kpi-card purple">
-      <div class="kpi-label">Fresh Walk-ins</div>
-      <div class="kpi-value">12,348</div>
-      <div class="kpi-sub">60.4% of total</div>
-    </div>
-    <div class="kpi-card teal">
-      <div class="kpi-label">Returning Walk-ins</div>
-      <div class="kpi-value">8,107</div>
-      <div class="kpi-sub">Previous week visits</div>
-    </div>
-    <div class="kpi-card red">
-      <div class="kpi-label">Not Yet Allotted</div>
-      <div class="kpi-value">8,104</div>
-      <div class="kpi-sub">Pending allocation</div>
-    </div>
-  </div>
-
-  <!-- Row 1: Monthly Trend (wide) + Channel Category -->
-  <div class="chart-grid row-2-1">
-    <div class="card">
-      <div class="card-title"><span class="dot dot-blue"></span>Monthly Walk-in Trend</div>
-      <canvas id="monthlyTrend"></canvas>
-    </div>
-    <div class="card">
-      <div class="card-title"><span class="dot dot-purple"></span>Channel Category</div>
-      <canvas id="channelCategory"></canvas>
-    </div>
-  </div>
-
-  <!-- Row 2: Location by Month + Fresh vs Returning -->
-  <div class="chart-grid row-2 section-gap">
-    <div class="card">
-      <div class="card-title"><span class="dot dot-teal"></span>Walk-ins by Location (Monthly)</div>
-      <div class="loc-pills">
-        <span class="pill" style="background:#ebf8ff;color:#2b6cb0">Hyderabad</span>
-        <span class="pill" style="background:#f0fff4;color:#276749">Damaigudda</span>
-        <span class="pill" style="background:#fff5f5;color:#9b2c2c">Nagole Dost</span>
-      </div>
-      <canvas id="locationChart"></canvas>
-    </div>
-    <div class="card">
-      <div class="card-title"><span class="dot dot-orange"></span>Fresh vs Returning Walk-ins</div>
-      <canvas id="walkinStatus"></canvas>
-    </div>
-  </div>
-
-  <!-- Row 3: Funnel + Channels + Top Agents -->
-  <div class="chart-grid row-2 section-gap">
-    <div class="card">
-      <div class="card-title"><span class="dot dot-green"></span>Conversion Funnel</div>
-      <div class="funnel-wrap" id="funnelChart"></div>
-    </div>
-    <div class="card">
-      <div class="card-title"><span class="dot dot-blue"></span>Top Channels (Source)</div>
-      <canvas id="channelChart" class="canvas-tall"></canvas>
-    </div>
-  </div>
-
-  <!-- Row 4: Reasons + Top Agents -->
-  <div class="chart-grid row-2 section-gap">
-    <div class="card">
-      <div class="card-title"><span class="dot dot-red"></span>Top Reasons for Not Joining</div>
-      <canvas id="reasonsChart" class="canvas-tall"></canvas>
-    </div>
-    <div class="card">
-      <div class="card-title"><span class="dot dot-purple"></span>Top 10 Agents by Walk-ins Handled</div>
-      <canvas id="agentsChart" class="canvas-tall"></canvas>
-    </div>
-  </div>
-
+<!-- Setup Banner -->
+<div id="setupBanner" onclick="document.getElementById('setupModal').style.display='flex'">
+  ⚡ <strong>Connect to live Google Sheets</strong> — click here for setup instructions &nbsp;›
 </div>
 
-<footer>HUB Visit Dashboard · Data Source: Pilot_Readiness_HYD_2.0 · Generated Feb 2026</footer>
+<!-- Header -->
+<header class="header">
+  <div>
+    <h1>🚗 HUB Visit Dashboard &nbsp;·&nbsp; Hyderabad Pilot Readiness</h1>
+    <p id="dataRange">Apr 2025 – Feb 2026 &nbsp;|&nbsp; 20,455 records</p>
+  </div>
+  <div class="header-right">
+    <span id="lastUpdated"></span>
+    <span class="badge">LIVE FILTERS</span>
+  </div>
+</header>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+  <span class="filter-label">Filter:</span>
+  <div class="filter-group" id="fg-month"></div>
+  <div class="filter-group" id="fg-week_label"></div>
+  <div class="filter-group" id="fg-Walkin_Location"></div>
+  <div class="filter-group" id="fg-channel"></div>
+  <div class="filter-group" id="fg-channel_category"></div>
+  <div class="filter-group" id="fg-Walkin Status"></div>
+  <div class="filter-group" id="fg-agent_username"></div>
+  <div class="filter-actions">
+    <div id="recordCount">Loading…</div>
+    <button class="clear-btn" onclick="clearAllFilters()">✕ Clear All</button>
+  </div>
+</div>
+
+<!-- Main -->
+<main class="main">
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-lbl">Total Walk-ins</div><div class="kpi-val" id="kpi-total">–</div><div class="kpi-sub" id="kpi-total-sub">–</div></div>
+    <div class="kpi-card green"><div class="kpi-lbl">Unique Drivers</div><div class="kpi-val" id="kpi-drivers">–</div><div class="kpi-sub">Unique employees</div></div>
+    <div class="kpi-card orange"><div class="kpi-lbl">Allocation Rate</div><div class="kpi-val" id="kpi-rate">–</div><div class="kpi-sub" id="kpi-rate-sub">–</div></div>
+    <div class="kpi-card purple"><div class="kpi-lbl">Fresh Walk-ins</div><div class="kpi-val" id="kpi-fresh">–</div><div class="kpi-sub" id="kpi-fresh-sub">–</div></div>
+    <div class="kpi-card teal"><div class="kpi-lbl">Returning</div><div class="kpi-val" id="kpi-return">–</div><div class="kpi-sub">Previous week visits</div></div>
+    <div class="kpi-card red"><div class="kpi-lbl">Not Yet Allotted</div><div class="kpi-val" id="kpi-notalloc">–</div><div class="kpi-sub">Pending allocation</div></div>
+  </div>
+
+  <!-- Row 1: Trend + Channel Cat -->
+  <div class="chart-row cols-2-1">
+    <div class="chart-card">
+      <div class="chart-title"><span class="dot" style="background:#3182ce"></span>Walk-in Trend by Month</div>
+      <div class="chart-wrap"><canvas id="c-monthly"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="dot" style="background:#805ad5"></span>Channel Category</div>
+      <div class="chart-wrap"><canvas id="c-chcat"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Row 2: Location + Status -->
+  <div class="chart-row cols-2">
+    <div class="chart-card">
+      <div class="chart-title"><span class="dot" style="background:#319795"></span>Walk-ins by Location (Monthly)</div>
+      <div class="chart-wrap"><canvas id="c-location"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="dot" style="background:#dd6b20"></span>Fresh vs Returning Walk-ins</div>
+      <div class="chart-wrap"><canvas id="c-status"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Row 3: Channels + Funnel -->
+  <div class="chart-row cols-2">
+    <div class="chart-card">
+      <div class="chart-title"><span class="dot" style="background:#3182ce"></span>Top 10 Channels / Sources</div>
+      <div class="chart-wrap tall"><canvas id="c-channels"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="dot" style="background:#38a169"></span>Conversion Funnel</div>
+      <div class="chart-wrap tall"><canvas id="c-funnel"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Row 4: Reasons + Agents -->
+  <div class="chart-row cols-2">
+    <div class="chart-card">
+      <div class="chart-title"><span class="dot" style="background:#e53e3e"></span>Top Reasons for Not Joining</div>
+      <div class="chart-wrap tall"><canvas id="c-reasons"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="dot" style="background:#805ad5"></span>Top 10 Agents</div>
+      <div class="chart-wrap tall"><canvas id="c-agents"></canvas></div>
+    </div>
+  </div>
+</main>
+
+<footer>HUB Visit Dashboard &nbsp;|&nbsp; Source: Pilot_Readiness_HYD_2.0 &nbsp;|&nbsp; <span id="footerUpdated"></span></footer>
+
+<!-- Setup Modal -->
+<div id="setupModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;padding:28px;max-width:580px;width:90%;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="font-size:1rem;font-weight:800">⚡ Connect to Live Google Sheets</h2>
+      <button onclick="document.getElementById('setupModal').style.display='none'" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#718096">✕</button>
+    </div>
+    <p style="font-size:.78rem;color:#4a5568;margin-bottom:16px">Follow these steps to connect your Google Sheet so the dashboard auto-updates daily:</p>
+    <div style="background:#f7fafc;border-radius:10px;padding:16px;font-size:.75rem;line-height:1.8;color:#2d3748">
+      <strong>Step 1</strong> — Open your Google Sheet:<br>
+      <a href="https://docs.google.com/spreadsheets/d/1110lUnF5gmR_-rwu3_LD_r4PlJPI8p31eStj-PUS9ns" target="_blank" style="color:#3182ce;word-break:break-all">https://docs.google.com/spreadsheets/d/1110lUnF5gmR_...</a><br><br>
+      <strong>Step 2</strong> — Click <b>Extensions → Apps Script</b><br><br>
+      <strong>Step 3</strong> — Delete any existing code and paste this:<br>
+    </div>
+    <pre style="background:#1a202c;color:#a0aec0;border-radius:8px;padding:14px;font-size:.68rem;overflow-x:auto;margin:10px 0;line-height:1.6">function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Hub_visit');
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var rows = data.slice(1).map(function(r) {
+    var o = {};
+    headers.forEach(function(h,i){ o[h] = r[i]; });
+    return o;
+  });
+  return ContentService
+    .createTextOutput(JSON.stringify({data:rows, updated:new Date().toISOString()}))
+    .setMimeType(ContentService.MimeType.JSON);
+}</pre>
+    <div style="background:#f7fafc;border-radius:10px;padding:16px;font-size:.75rem;line-height:1.8;color:#2d3748">
+      <strong>Step 4</strong> — Click <b>Deploy → New Deployment</b><br>
+      &nbsp;&nbsp;• Type: <b>Web App</b><br>
+      &nbsp;&nbsp;• Execute as: <b>Me</b><br>
+      &nbsp;&nbsp;• Who has access: <b>Anyone</b><br>
+      &nbsp;&nbsp;• Click <b>Deploy</b> → Copy the Web App URL<br><br>
+      <strong>Step 5</strong> — Paste the URL below and click Connect:
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <input id="scriptUrl" type="text" placeholder="https://script.google.com/macros/s/..." style="flex:1;border:1.5px solid #cbd5e0;border-radius:8px;padding:8px 12px;font-size:.75rem;outline:none">
+      <button onclick="connectScript()" style="background:#3182ce;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:.75rem;font-weight:700;cursor:pointer">Connect</button>
+    </div>
+    <p style="font-size:.68rem;color:#a0aec0;margin-top:8px">⚠️ Make sure the sheet tab is named exactly <b>Hub_visit</b></p>
+  </div>
+</div>
 
 <script>
-// ─── Color Palettes ────────────────────────────────────────────────
-const BLUE   = '#3182ce';
-const GREEN  = '#38a169';
-const ORANGE = '#dd6b20';
-const PURPLE = '#805ad5';
-const TEAL   = '#319795';
-const RED    = '#e53e3e';
+// ═══════════════════════════════════════════════
+// CONFIG — paste your Apps Script URL here to enable live data
+// ═══════════════════════════════════════════════
+const APPS_SCRIPT_URL = localStorage.getItem('hubDashScriptUrl') || '';
 
-const MONTHS = ['Apr 25','Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26'];
+// Column indices in row array
+const C = {
+  date:0, loc:1, ch:2, chcat:3, agent:4, ws:5, reason:6,
+  empid:7, alloc:8, doc:9, sd:10, train:11, contract:12, dtpass:13,
+  month:14, week:15
+};
 
-// ─── 1. Monthly Trend ────────────────────────────────────────────
-new Chart(document.getElementById('monthlyTrend'), {
-  type: 'line',
-  data: {
-    labels: MONTHS,
-    datasets: [{
-      label: 'Walk-ins',
-      data: [3, 2610, 2532, 2670, 2986, 4076, 3696, 1882],
-      borderColor: BLUE,
-      backgroundColor: 'rgba(49,130,206,0.10)',
-      borderWidth: 3,
-      fill: true,
-      tension: 0.4,
-      pointBackgroundColor: BLUE,
-      pointRadius: 5,
-      pointHoverRadius: 7
-    }]
-  },
-  options: {
-    responsive: true,
-    plugins: {
-      legend: { display: false },
-      tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y.toLocaleString()} walk-ins` } }
-    },
-    scales: {
-      y: { beginAtZero: true, grid: { color: '#edf2f7' }, ticks: { font: { size: 11 } } },
-      x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+const COLORS = {
+  blue:'#3182CE', green:'#38A169', orange:'#DD6B20', purple:'#805AD5',
+  teal:'#319795', red:'#E53E3E', gray:'#718096',
+  palette:['#3182CE','#38A169','#DD6B20','#805AD5','#319795','#E53E3E',
+           '#4299E1','#68D391','#F6AD55','#B794F4','#38B2AC','#FC8181',
+           '#63B3ED','#9AE6B4','#FBD38D','#D6BCFA']
+};
+
+let DATA = null;       // {cats, rows}
+let filtered = [];     // filtered row indices
+let charts = {};
+let activeFilters = {};// {colKey: Set of selected indices}
+
+// ─── LOAD DATA ───────────────────────────────────────────────────
+async function loadData() {
+  try {
+    if (APPS_SCRIPT_URL) {
+      const res = await fetch(APPS_SCRIPT_URL);
+      const json = await res.json();
+      DATA = processRawData(json.data);
+      document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date(json.updated).toLocaleDateString();
+    } else {
+      const res = await fetch('./data.json');
+      DATA = await res.json();
+      document.getElementById('lastUpdated').textContent = 'Local data';
     }
+    document.getElementById('loading').style.display = 'none';
+    init();
+  } catch(e) {
+    document.getElementById('loading').innerHTML = '<p style="color:#fc8181">Failed to load data. Please check the data.json file.</p>';
+    console.error(e);
   }
-});
+}
 
-// ─── 2. Channel Category (Doughnut) ─────────────────────────────
-new Chart(document.getElementById('channelCategory'), {
-  type: 'doughnut',
-  data: {
-    labels: ['Perf Marketing','Driver Sourcing Vendor','Driver Referral','Field Sales Executive'],
-    datasets: [{
-      data: [15547, 3170, 978, 760],
-      backgroundColor: [BLUE, GREEN, ORANGE, PURPLE],
-      borderWidth: 2,
-      borderColor: '#fff'
-    }]
-  },
-  options: {
-    responsive: true,
-    cutout: '60%',
-    plugins: {
-      legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12, boxWidth: 12 } },
-      tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString()}` } }
-    }
-  }
-});
+// Process raw JSON from Apps Script into same compact format as data.json
+function processRawData(rawRows) {
+  // Build category maps
+  const catCols = ['Walkin_Location','channel','channel_category','agent_username',
+                   'Walkin Status','reason_for_not_joining'];
+  const cats = {};
+  catCols.forEach(col => {
+    const vals = [...new Set(rawRows.map(r => String(r[col]||'Unknown')))].sort();
+    cats[col] = vals;
+  });
+  // Month and week (sorted)
+  const monthMap = {}, weekMap = {};
+  rawRows.forEach(r => {
+    const d = new Date(r['date']);
+    if (isNaN(d)) return;
+    const m = d.toLocaleDateString('en-US',{month:'short',year:'numeric'}).replace(',',' ');
+    const wn = getWeek(d);
+    const wl = `Wk ${String(wn).padStart(2,'0')} ${d.getFullYear()}`;
+    const ys = `${d.getFullYear()}-W${String(wn).padStart(2,'0')}`;
+    monthMap[m] = monthMap[m] || d.getTime();
+    weekMap[wl] = weekMap[wl] || ys;
+  });
+  cats['month'] = Object.entries(monthMap).sort((a,b)=>a[1]-b[1]).map(e=>e[0]);
+  cats['week_label'] = Object.keys(weekMap).sort((a,b)=>weekMap[a]>weekMap[b]?1:-1);
 
-// ─── 3. Location by Month (Grouped Bar) ─────────────────────────
-new Chart(document.getElementById('locationChart'), {
-  type: 'bar',
-  data: {
-    labels: ['Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26'],
-    datasets: [
-      { label: 'Hyderabad',    data: [1394,1181,1371,1811,2372,1895,1065], backgroundColor: BLUE },
-      { label: 'Damaigudda',   data: [398,334,344,371,414,387,174],         backgroundColor: GREEN },
-      { label: 'Nagole Dost',  data: [0,0,0,0,208,418,165],                 backgroundColor: ORANGE }
-    ]
-  },
-  options: {
-    responsive: true,
-    plugins: {
-      legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } }
-    },
-    scales: {
-      y: { beginAtZero: true, grid: { color: '#edf2f7' }, stacked: false, ticks: { font: { size: 11 } } },
-      x: { grid: { display: false }, ticks: { font: { size: 11 } } }
-    }
-  }
-});
+  const isValid = v => v && String(v) !== 'NaT' && String(v) !== '';
 
-// ─── 4. Fresh vs Returning (Stacked Bar) ────────────────────────
-new Chart(document.getElementById('walkinStatus'), {
-  type: 'bar',
-  data: {
-    labels: ['Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26'],
-    datasets: [
-      { label: 'Fresh Walkin',          data: [1979,1894,1885,1697,1966,1991,933],  backgroundColor: TEAL },
-      { label: 'Previous Week Walkin',  data: [631,638,785,1289,2110,1705,949],     backgroundColor: 'rgba(128,90,213,0.75)' }
-    ]
-  },
-  options: {
-    responsive: true,
-    plugins: {
-      legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } }
-    },
-    scales: {
-      x: { stacked: true, grid: { display: false }, ticks: { font: { size: 11 } } },
-      y: { stacked: true, beginAtZero: true, grid: { color: '#edf2f7' }, ticks: { font: { size: 11 } } }
-    }
-  }
-});
+  const rows = rawRows.map(r => {
+    const d = new Date(r['date']);
+    if (isNaN(d)) return null;
+    const m = d.toLocaleDateString('en-US',{month:'short',year:'numeric'}).replace(',',' ');
+    const wn = getWeek(d);
+    const wl = `Wk ${String(wn).padStart(2,'0')} ${d.getFullYear()}`;
+    const mi = cats['month'].indexOf(m);
+    const wi = cats['week_label'].indexOf(wl);
 
-// ─── 5. Conversion Funnel (Custom HTML) ─────────────────────────
-const funnelData = [
-  { label: 'Total Walk-ins',     value: 20455, color: BLUE   },
-  { label: 'Documentation Done', value: 7023,  color: TEAL   },
-  { label: 'Driving Test Pass',  value: 6930,  color: GREEN  },
-  { label: 'Contract Signed',    value: 7377,  color: PURPLE },
-  { label: 'Training Complete',  value: 7130,  color: ORANGE },
-  { label: 'Vehicle Allocated',  value: 12351, color: '#e53e3e' },
+    return [
+      d.toISOString().slice(0,10),
+      cats['Walkin_Location'].indexOf(String(r['Walkin_Location']||'Unknown')),
+      cats['channel'].indexOf(String(r['channel']||'Unknown')),
+      cats['channel_category'].indexOf(String(r['channel_category']||'Unknown')),
+      cats['agent_username'].indexOf(String(r['agent_username']||'Unknown')),
+      cats['Walkin Status'].indexOf(String(r['Walkin Status']||'Unknown')),
+      cats['reason_for_not_joining'].indexOf(String(r['reason_for_not_joining']||'Unknown')),
+      String(r['employee_id']||''),
+      r['Final Allocation'] && r['Final Allocation'] !== 'Not Yet Allotted' ? 1 : 0,
+      isValid(r['documentation_timestamp']) ? 1 : 0,
+      isValid(r['sd_timestamp']) ? 1 : 0,
+      isValid(r['Training Complete_timestamp']) ? 1 : 0,
+      isValid(r['Driver Contract Signed_timestamp']) ? 1 : 0,
+      isValid(r['Driving Test Pass_timestamp']) ? 1 : 0,
+      mi, wi
+    ];
+  }).filter(Boolean);
+
+  return {cats, rows};
+}
+
+function getWeek(d) {
+  const s = new Date(d.getFullYear(), 0, 1);
+  return Math.ceil(((d - s) / 86400000 + s.getDay() + 1) / 7);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────
+function init() {
+  buildFilters();
+  initCharts();
+  applyFilters();
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.filter-group')) closeAllDropdowns();
+  });
+  const ts = new Date().toLocaleString();
+  document.getElementById('footerUpdated').textContent = 'Generated: ' + ts;
+}
+
+// ─── FILTER DROPDOWNS ─────────────────────────────────────────────
+const FILTER_CONFIG = [
+  {key:'month',       label:'Month',         short:'Month'},
+  {key:'week_label',  label:'Week',          short:'Week'},
+  {key:'Walkin_Location', label:'Location / Hub',short:'Location'},
+  {key:'channel',     label:'Source / Channel',  short:'Channel'},
+  {key:'channel_category',label:'Channel Category',short:'Ch.Cat'},
+  {key:'Walkin Status',   label:'Walkin Status',  short:'Status'},
+  {key:'agent_username',  label:'Agent',          short:'Agent'},
 ];
-const funnelMax = 20455;
-const funnelEl = document.getElementById('funnelChart');
-funnelData.forEach(d => {
-  const pct = ((d.value / funnelMax) * 100).toFixed(1);
-  funnelEl.innerHTML += `
-    <div class="funnel-row">
-      <div class="funnel-label">${d.label}</div>
-      <div class="funnel-bar-wrap">
-        <div class="funnel-bar" style="width:${pct}%; background:${d.color}">
-          ${d.value.toLocaleString()}
+
+function buildFilters() {
+  FILTER_CONFIG.forEach(fc => {
+    const vals = DATA.cats[fc.key] || [];
+    const el = document.getElementById('fg-'+fc.key);
+    if (!el) return;
+    activeFilters[fc.key] = new Set(vals.map((_,i)=>i)); // all selected
+    el.innerHTML = buildDropdownHTML(fc, vals);
+    setupDropdownEvents(el, fc.key, vals);
+  });
+}
+
+function buildDropdownHTML(fc, vals) {
+  const options = vals.map((v,i) =>
+    `<div class="dd-option">
+      <input type="checkbox" id="cb-${fc.key}-${i}" value="${i}" checked onchange="onFilterChange('${fc.key}')">
+      <label for="cb-${fc.key}-${i}">${v||'(blank)'}</label>
+    </div>`
+  ).join('');
+  return `
+    <button class="filter-btn" onclick="toggleDropdown('${fc.key}')">
+      ${fc.short} <span class="cnt" id="cnt-${fc.key}" style="display:none">0</span> <span>▾</span>
+    </button>
+    <div class="dropdown-menu" id="dm-${fc.key}">
+      <div class="dd-search"><input type="text" placeholder="Search ${fc.label}..." oninput="searchFilter('${fc.key}',this.value)"></div>
+      <div class="dd-options" id="opts-${fc.key}">
+        <div class="dd-option dd-select-all">
+          <input type="checkbox" id="cb-${fc.key}-all" checked onchange="toggleAll('${fc.key}',this.checked)">
+          <label for="cb-${fc.key}-all">Select All</label>
         </div>
+        ${options}
       </div>
-      <div class="funnel-pct">${pct}%</div>
     </div>`;
-});
+}
 
-// ─── 6. Top Channels (Horizontal Bar) ───────────────────────────
-new Chart(document.getElementById('channelChart'), {
-  type: 'bar',
-  data: {
-    labels: ['Organic','Driver Sourcing Vendor','Car Sticker','Whatsapp','Fountain',
-             'Driver Referral','Driver Sourcing SubVendor','Field Sale Executive','OLX Leads','VMP Leads'],
-    datasets: [{
-      label: 'Walk-ins',
-      data: [5223, 3145, 2413, 1700, 1172, 978, 933, 760, 477, 452],
-      backgroundColor: [
-        '#3182ce','#4299e1','#63b3ed','#319795','#38a169',
-        '#68d391','#805ad5','#b794f4','#dd6b20','#f6ad55'
-      ],
-      borderRadius: 5
-    }]
-  },
-  options: {
-    indexAxis: 'y',
-    responsive: true,
-    plugins: {
-      legend: { display: false },
-      tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x.toLocaleString()} walk-ins` } }
-    },
-    scales: {
-      x: { beginAtZero: true, grid: { color: '#edf2f7' }, ticks: { font: { size: 11 } } },
-      y: { grid: { display: false }, ticks: { font: { size: 11 } } }
-    }
-  }
-});
+function setupDropdownEvents(el, key, vals) {}
 
-// ─── 7. Reasons for Not Joining ─────────────────────────────────
-new Chart(document.getElementById('reasonsChart'), {
-  type: 'bar',
-  data: {
-    labels: [
-      'Sent for Driving Test','Agent Not Assigned','Wants Specific Day',
-      'No Address Proof','Needs Lower Deposit','Enquiry',
-      'Uber ID Issue','Driver Disappeared','Vehicle Allotted','ID Rejected','Add On Driver','BGC Pending'
-    ],
-    datasets: [{
-      label: 'Count',
-      data: [5319, 1431, 830, 624, 590, 441, 321, 279, 230, 165, 141, 126],
-      backgroundColor: [
-        GREEN, '#e53e3e','#dd6b20','#805ad5',TEAL,BLUE,
-        '#38b2ac','#fc8181','#68d391','#b794f4','#f6ad55','#63b3ed'
-      ],
-      borderRadius: 5
-    }]
-  },
-  options: {
-    indexAxis: 'y',
-    responsive: true,
-    plugins: {
-      legend: { display: false },
-      tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x.toLocaleString()}` } }
-    },
-    scales: {
-      x: { beginAtZero: true, grid: { color: '#edf2f7' }, ticks: { font: { size: 11 } } },
-      y: { grid: { display: false }, ticks: { font: { size: 10 } } }
-    }
+function toggleDropdown(key) {
+  const dm = document.getElementById('dm-'+key);
+  const isOpen = dm.classList.contains('open');
+  closeAllDropdowns();
+  if (!isOpen) {
+    dm.classList.add('open');
+    dm.previousElementSibling.classList.add('active');
   }
-});
+}
 
-// ─── 8. Top Agents ───────────────────────────────────────────────
-new Chart(document.getElementById('agentsChart'), {
-  type: 'bar',
-  data: {
-    labels: [
-      'chatla_bharathwaj','avinash_ef11721','ravi_dondapati',
-      'manuru_ef11783','shakeel_ef11666','kavali_venkatesh',
-      'EF2210','lolokapuri_varma','allagonda_ef11719','bhaskar_ef11244'
-    ],
-    datasets: [{
-      label: 'Walk-ins',
-      data: [1510, 961, 938, 884, 839, 728, 576, 545, 481, 397],
-      backgroundColor: [
-        '#3182ce','#319795','#38a169','#805ad5','#dd6b20',
-        '#4299e1','#38b2ac','#68d391','#b794f4','#f6ad55'
-      ],
-      borderRadius: 5
-    }]
-  },
-  options: {
-    indexAxis: 'y',
-    responsive: true,
-    plugins: {
-      legend: { display: false },
-      tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x.toLocaleString()} walk-ins` } }
-    },
-    scales: {
-      x: { beginAtZero: true, grid: { color: '#edf2f7' }, ticks: { font: { size: 11 } } },
-      y: { grid: { display: false }, ticks: { font: { size: 11 } } }
-    }
+function closeAllDropdowns() {
+  document.querySelectorAll('.dropdown-menu.open').forEach(d => {
+    d.classList.remove('open');
+    d.previousElementSibling.classList.remove('active');
+  });
+}
+
+function searchFilter(key, query) {
+  const opts = document.getElementById('opts-'+key);
+  opts.querySelectorAll('.dd-option:not(.dd-select-all)').forEach(el => {
+    const txt = el.querySelector('label').textContent.toLowerCase();
+    el.style.display = txt.includes(query.toLowerCase()) ? '' : 'none';
+  });
+}
+
+function toggleAll(key, checked) {
+  const vals = DATA.cats[key] || [];
+  document.querySelectorAll(`#opts-${key} input[type=checkbox]:not(#cb-${key}-all)`).forEach(cb => {
+    cb.checked = checked;
+  });
+  if (checked) activeFilters[key] = new Set(vals.map((_,i)=>i));
+  else activeFilters[key] = new Set();
+  updateFilterBadge(key, vals);
+  applyFilters();
+}
+
+function onFilterChange(key) {
+  const vals = DATA.cats[key] || [];
+  activeFilters[key] = new Set();
+  document.querySelectorAll(`#opts-${key} input[type=checkbox]:not(#cb-${key}-all)`).forEach(cb => {
+    if (cb.checked) activeFilters[key].add(Number(cb.value));
+  });
+  // update select-all state
+  const allCb = document.getElementById(`cb-${key}-all`);
+  if (allCb) allCb.checked = activeFilters[key].size === vals.length;
+  updateFilterBadge(key, vals);
+  applyFilters();
+}
+
+function updateFilterBadge(key, vals) {
+  const cnt = document.getElementById('cnt-'+key);
+  const sel = activeFilters[key].size;
+  if (cnt) {
+    if (sel === vals.length || sel === 0) { cnt.style.display='none'; }
+    else { cnt.style.display='inline'; cnt.textContent=sel; }
   }
-});
+}
+
+function clearAllFilters() {
+  FILTER_CONFIG.forEach(fc => {
+    const vals = DATA.cats[fc.key] || [];
+    activeFilters[fc.key] = new Set(vals.map((_,i)=>i));
+    document.querySelectorAll(`#opts-${fc.key} input[type=checkbox]`).forEach(cb => cb.checked=true);
+    updateFilterBadge(fc.key, vals);
+  });
+  applyFilters();
+}
+
+// ─── APPLY FILTERS ─────────────────────────────────────────────────
+// key→column index mapping
+const KEY_COL = {
+  'month': C.month, 'week_label': C.week, 'Walkin_Location': C.loc,
+  'channel': C.ch, 'channel_category': C.chcat,
+  'Walkin Status': C.ws, 'agent_username': C.agent
+};
+
+function applyFilters() {
+  filtered = DATA.rows.filter(row => {
+    for (const fc of FILTER_CONFIG) {
+      const col = KEY_COL[fc.key];
+      if (col === undefined) continue;
+      if (!activeFilters[fc.key].has(row[col])) return false;
+    }
+    return true;
+  });
+  updateKPIs();
+  updateAllCharts();
+  document.getElementById('recordCount').textContent = `📊 ${filtered.length.toLocaleString()} records`;
+}
+
+// ─── KPIs ──────────────────────────────────────────────────────────
+function updateKPIs() {
+  const total = filtered.length;
+  const unique = new Set(filtered.map(r=>r[C.empid])).size;
+  const allocated = filtered.filter(r=>r[C.alloc]).length;
+  const fresh = filtered.filter(r=>DATA.cats['Walkin Status'][r[C.ws]]==='Fresh Walkin').length;
+  const returning = filtered.filter(r=>DATA.cats['Walkin Status'][r[C.ws]]==='Previous week walkin').length;
+  const notAlloc = total - allocated;
+  const rate = total ? (allocated/total) : 0;
+
+  setText('kpi-total', fmt(total));
+  setText('kpi-total-sub', 'Walk-in records');
+  setText('kpi-drivers', fmt(unique));
+  setText('kpi-rate', (rate*100).toFixed(1)+'%');
+  setText('kpi-rate-sub', fmt(allocated)+' allocated');
+  setText('kpi-fresh', fmt(fresh));
+  setText('kpi-fresh-sub', total ? (fresh/total*100).toFixed(1)+'% of total' : '–');
+  setText('kpi-return', fmt(returning));
+  setText('kpi-notalloc', fmt(notAlloc));
+}
+
+function setText(id, val) { const el=document.getElementById(id); if(el) el.textContent=val; }
+function fmt(n) { return n.toLocaleString(); }
+
+// ─── CHARTS ────────────────────────────────────────────────────────
+function initCharts() {
+  const base = {
+    responsive:true, maintainAspectRatio:true,
+    plugins:{legend:{labels:{font:{family:'Segoe UI',size:11},boxWidth:12}},
+             tooltip:{callbacks:{label:ctx=>' '+ctx.parsed.y?.toLocaleString()||' '+ctx.parsed?.toLocaleString()||' '+ctx.parsed.x?.toLocaleString()}}}
+  };
+
+  charts.monthly = new Chart(document.getElementById('c-monthly'), {
+    type:'line',
+    data:{labels:[],datasets:[{label:'Walk-ins',data:[],borderColor:COLORS.blue,backgroundColor:'rgba(49,130,206,.1)',fill:true,tension:.4,pointRadius:4,pointHoverRadius:6,borderWidth:2.5}]},
+    options:{...base,plugins:{...base.plugins,legend:{display:false}},
+      scales:{y:{beginAtZero:true,grid:{color:'#edf2f7'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:10}}}}}
+  });
+
+  charts.chcat = new Chart(document.getElementById('c-chcat'), {
+    type:'doughnut',
+    data:{labels:[],datasets:[{data:[],backgroundColor:[COLORS.blue,COLORS.green,COLORS.orange,COLORS.purple],borderWidth:2,borderColor:'#fff'}]},
+    options:{...base,cutout:'60%',plugins:{...base.plugins,legend:{position:'bottom',labels:{font:{size:10},boxWidth:10,padding:10}}}}
+  });
+
+  charts.location = new Chart(document.getElementById('c-location'), {
+    type:'bar',
+    data:{labels:[],datasets:[]},
+    options:{...base,scales:{x:{stacked:false,grid:{display:false},ticks:{font:{size:10}}},y:{beginAtZero:true,grid:{color:'#edf2f7'},ticks:{font:{size:10}}}}}
+  });
+
+  charts.status = new Chart(document.getElementById('c-status'), {
+    type:'bar',
+    data:{labels:[],datasets:[]},
+    options:{...base,scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,beginAtZero:true,grid:{color:'#edf2f7'},ticks:{font:{size:10}}}}}
+  });
+
+  charts.channels = new Chart(document.getElementById('c-channels'), {
+    type:'bar',
+    data:{labels:[],datasets:[{label:'Walk-ins',data:[],backgroundColor:COLORS.palette,borderRadius:4}]},
+    options:{...base,indexAxis:'y',plugins:{...base.plugins,legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:'#edf2f7'},ticks:{font:{size:10}}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
+  });
+
+  charts.funnel = new Chart(document.getElementById('c-funnel'), {
+    type:'bar',
+    data:{labels:[],datasets:[{label:'Count',data:[],backgroundColor:[COLORS.blue,COLORS.teal,COLORS.green,COLORS.purple,COLORS.orange,COLORS.red],borderRadius:4}]},
+    options:{...base,indexAxis:'y',plugins:{...base.plugins,legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:'#edf2f7'},ticks:{font:{size:10}}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
+  });
+
+  charts.reasons = new Chart(document.getElementById('c-reasons'), {
+    type:'bar',
+    data:{labels:[],datasets:[{label:'Count',data:[],backgroundColor:COLORS.red+'cc',borderRadius:4}]},
+    options:{...base,indexAxis:'y',plugins:{...base.plugins,legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:'#edf2f7'},ticks:{font:{size:10}}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
+  });
+
+  charts.agents = new Chart(document.getElementById('c-agents'), {
+    type:'bar',
+    data:{labels:[],datasets:[{label:'Walk-ins',data:[],backgroundColor:COLORS.purple+'cc',borderRadius:4}]},
+    options:{...base,indexAxis:'y',plugins:{...base.plugins,legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:'#edf2f7'},ticks:{font:{size:10}}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
+  });
+}
+
+function updateAllCharts() {
+  updateMonthly();
+  updateChCat();
+  updateLocation();
+  updateStatus();
+  updateChannels();
+  updateFunnel();
+  updateReasons();
+  updateAgents();
+}
+
+// count helper
+function countBy(rows, colIdx) {
+  const m = {};
+  rows.forEach(r => {
+    const k = r[colIdx];
+    m[k] = (m[k]||0) + 1;
+  });
+  return m;
+}
+
+function topN(map, cats, n=10, excludeUnknown=false) {
+  let entries = Object.entries(map)
+    .map(([k,v])=>({label:cats[Number(k)], val:v}))
+    .filter(e=>!excludeUnknown || e.label!=='Unknown');
+  entries.sort((a,b)=>b.val-a.val);
+  return entries.slice(0,n);
+}
+
+function updateMonthly() {
+  // Group by month (chronological)
+  const monthCats = DATA.cats['month'];
+  const byMonth = new Array(monthCats.length).fill(0);
+  filtered.forEach(r => { byMonth[r[C.month]] = (byMonth[r[C.month]]||0)+1; });
+  // Only show months with data
+  const labels=[], data=[];
+  byMonth.forEach((v,i)=>{ if(v>0){labels.push(monthCats[i]);data.push(v);} });
+  setChart(charts.monthly, labels, [{label:'Walk-ins',data,borderColor:COLORS.blue,backgroundColor:'rgba(49,130,206,.1)',fill:true,tension:.4,pointRadius:4,borderWidth:2.5}]);
+}
+
+function updateChCat() {
+  const m = countBy(filtered, C.chcat);
+  const top = topN(m, DATA.cats['channel_category']);
+  setChart(charts.chcat, top.map(e=>e.label), [{data:top.map(e=>e.val),backgroundColor:[COLORS.blue,COLORS.green,COLORS.orange,COLORS.purple,COLORS.teal,COLORS.red],borderWidth:2,borderColor:'#fff'}]);
+}
+
+function updateLocation() {
+  const monthCats = DATA.cats['month'];
+  const locCats   = DATA.cats['Walkin_Location'];
+  // Get top 3 locations by count
+  const locTotal = countBy(filtered, C.loc);
+  const top3Locs = topN(locTotal, locCats, 3, true).map(e=>locCats.indexOf(e.label));
+
+  const byMonthLoc = {};
+  filtered.forEach(r => {
+    if (!top3Locs.includes(r[C.loc])) return;
+    byMonthLoc[r[C.month]] = byMonthLoc[r[C.month]] || {};
+    byMonthLoc[r[C.month]][r[C.loc]] = (byMonthLoc[r[C.month]][r[C.loc]]||0)+1;
+  });
+  const months = [...new Set(filtered.map(r=>r[C.month]))].sort();
+  const labels = months.map(i=>monthCats[i]);
+  const locColors=[COLORS.blue,COLORS.green,COLORS.orange];
+  const datasets = top3Locs.map((li,ci)=>({
+    label: locCats[li],
+    data: months.map(mi=>(byMonthLoc[mi]||{})[li]||0),
+    backgroundColor: locColors[ci],
+    borderRadius:3
+  }));
+  setChart(charts.location, labels, datasets);
+}
+
+function updateStatus() {
+  const monthCats = DATA.cats['month'];
+  const wsCats    = DATA.cats['Walkin Status'];
+  const months = [...new Set(filtered.map(r=>r[C.month]))].sort();
+  const labels = months.map(i=>monthCats[i]);
+  const byMonthWS = {};
+  filtered.forEach(r => {
+    byMonthWS[r[C.month]] = byMonthWS[r[C.month]] || {};
+    byMonthWS[r[C.month]][r[C.ws]] = (byMonthWS[r[C.month]][r[C.ws]]||0)+1;
+  });
+  const datasets = wsCats.map((ws,wi)=>({
+    label:ws,
+    data:months.map(mi=>(byMonthWS[mi]||{})[wi]||0),
+    backgroundColor:wi===0?COLORS.teal:COLORS.purple,
+    borderRadius:3
+  }));
+  setChart(charts.status, labels, datasets);
+}
+
+function updateChannels() {
+  const m = countBy(filtered, C.ch);
+  const top = topN(m, DATA.cats['channel'], 10, true);
+  setChart(charts.channels, top.map(e=>e.label), [{label:'Walk-ins',data:top.map(e=>e.val),backgroundColor:COLORS.palette,borderRadius:4}]);
+  charts.channels.options.plugins.tooltip.callbacks.label = ctx => ' '+ctx.parsed.x.toLocaleString();
+  charts.channels.update();
+}
+
+function updateFunnel() {
+  const total    = filtered.length;
+  const doc      = filtered.filter(r=>r[C.doc]).length;
+  const dtpass   = filtered.filter(r=>r[C.dtpass]).length;
+  const contract = filtered.filter(r=>r[C.contract]).length;
+  const train    = filtered.filter(r=>r[C.train]).length;
+  const alloc    = filtered.filter(r=>r[C.alloc]).length;
+  const labels   = ['Total Walk-ins','Documentation','Driving Test Pass','Contract Signed','Training Complete','Allocated'];
+  const data     = [total,doc,dtpass,contract,train,alloc];
+  const bgColors = [COLORS.blue,COLORS.teal,COLORS.green,COLORS.purple,COLORS.orange,COLORS.red];
+  setChart(charts.funnel, labels, [{label:'Count',data,backgroundColor:bgColors,borderRadius:4}]);
+  charts.funnel.options.plugins.tooltip.callbacks.label = ctx => ' '+ctx.parsed.x.toLocaleString();
+  charts.funnel.update();
+}
+
+function updateReasons() {
+  const m = countBy(filtered, C.reason);
+  const top = topN(m, DATA.cats['reason_for_not_joining'], 12, true);
+  setChart(charts.reasons, top.map(e=>e.label.length>30?e.label.slice(0,28)+'…':e.label), [{label:'Count',data:top.map(e=>e.val),backgroundColor:COLORS.red+'bb',borderRadius:4}]);
+  charts.reasons.options.plugins.tooltip.callbacks.label = ctx => ' '+ctx.parsed.x.toLocaleString();
+  charts.reasons.update();
+}
+
+function updateAgents() {
+  const m = countBy(filtered, C.agent);
+  const top = topN(m, DATA.cats['agent_username'], 10, true);
+  const filteredTop = top.filter(e=>e.label && e.label!=='Unknown' && e.label.trim()!=='');
+  setChart(charts.agents, filteredTop.map(e=>e.label), [{label:'Walk-ins',data:filteredTop.map(e=>e.val),backgroundColor:COLORS.purple+'bb',borderRadius:4}]);
+  charts.agents.options.plugins.tooltip.callbacks.label = ctx => ' '+ctx.parsed.x.toLocaleString();
+  charts.agents.update();
+}
+
+function setChart(chart, labels, datasets) {
+  chart.data.labels = labels;
+  chart.data.datasets = datasets;
+  chart.update('none');
+}
+
+// ─── CONNECT APPS SCRIPT ──────────────────────────────────────────
+function connectScript() {
+  const url = document.getElementById('scriptUrl').value.trim();
+  if (!url || !url.startsWith('https://script.google.com')) {
+    alert('Please paste a valid Apps Script URL starting with https://script.google.com');
+    return;
+  }
+  localStorage.setItem('hubDashScriptUrl', url);
+  document.getElementById('setupModal').style.display='none';
+  document.getElementById('loading').style.display='flex';
+  document.getElementById('loading').querySelector('p').textContent='Connecting to Google Sheets…';
+  location.reload();
+}
+
+// ─── START ────────────────────────────────────────────────────────
+loadData();
 </script>
 </body>
 </html>
