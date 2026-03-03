@@ -350,37 +350,30 @@ let F = { month:"", week:"", loc:"", chcat:"", ch:"", leadtype:"", status:"", ag
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 async function init() {
   const url = localStorage.getItem("hubScriptUrl");
-  if (url) {
-    try {
-      const r = await fetch(url + "?action=getData", {mode:"cors"});
-      const raw = await r.json();
-      const processed = processLive(raw);
-      if (processed) {
-        DATA = processed;
-        setStatus("✅ Live data connected from Google Sheets", true);
-        setupUI(); return;
-      }
-    } catch(e) { console.error(e); }
-    setStatus("⚠️ Live data failed — using local data_v2.json", false);
+  if (!url) {
+    setStatus("🔗 No Google Sheets connected — click 'Live Data' to enter your Apps Script URL", false);
+    return;
   }
-  await loadLocal();
-}
-async function loadLocal() {
+  setStatus("⏳ Loading from Google Sheets…", false);
   try {
-    const r = await fetch("data_v2.json");
-    if (!r.ok) throw new Error(r.status);
-    DATA = await r.json();
-    setStatus("📁 Local data loaded · Use 🔗 Live Data to connect Google Sheets", false);
-    setupUI();
+    const r = await fetch(url + "?action=getData", {mode:"cors"});
+    const raw = await r.json();
+    const processed = processLive(raw);
+    if (processed) {
+      DATA = processed;
+      setStatus("✅ Live data connected from Google Sheets", true);
+      setupUI(); return;
+    }
+    throw new Error("processLive returned null");
   } catch(e) {
-    document.getElementById("statusBar").className = "status-bar err";
-    setStatus("❌ data_v2.json not found — place it in the same folder as index.html", false);
+    console.error(e);
+    setStatus("❌ Could not load data from Google Sheets — check your Apps Script URL and redeploy", false, true);
   }
 }
-function setStatus(msg, ok) {
+function setStatus(msg, ok, err) {
   const el = document.getElementById("statusBar");
   el.textContent = msg;
-  el.className = "status-bar" + (ok ? " ok" : "");
+  el.className = "status-bar" + (ok ? " ok" : err ? " err" : "");
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
