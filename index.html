@@ -390,13 +390,13 @@ function populateFilters() {
   setOpts("fWeek", "Week Begin", DATA.weeks || []);
   // Location
   setOpts("fLoc", "Location", LOC_ALL);
-  // Channel — collect from ch_by_month across all months
+  // Channel — specific channels (32 values) from channel_by_month
   const chs = new Set();
-  Object.values(DATA.ch_by_month || {}).forEach(m => Object.keys(m).forEach(c => chs.add(c)));
+  Object.values(DATA.channel_by_month || {}).forEach(m => Object.keys(m).forEach(c => chs.add(c)));
   setOpts("fCh", "Channel", [...chs].sort());
-  // Ch.Cat — collect from lead_by_month
+  // Ch.Cat — channel categories (4 values) from ch_by_month
   const cats = new Set();
-  Object.values(DATA.lead_by_month || {}).forEach(m => Object.keys(m).forEach(c => cats.add(c)));
+  Object.values(DATA.ch_by_month || {}).forEach(m => Object.keys(m).forEach(c => cats.add(c)));
   setOpts("fChCat", "Ch.Cat", [...cats].sort());
   // Agent
   const ags = new Set();
@@ -429,7 +429,23 @@ function populatePeriods() {
   render();
 }
 function getPeriods()  { return DATA ? (view==="monthly"?DATA.months:view==="weekly"?DATA.weeks:DATA.days||[]) : []; }
-function getByData()   { return DATA ? (view==="monthly"?DATA.by_month:view==="weekly"?DATA.by_week:DATA.by_day) : {}; }
+function getByData() {
+  if (!DATA) return {};
+  // When Ch.Cat filter active: use per-chcat funnel breakdowns
+  if (F.chcat) {
+    const base = view==="monthly" ? DATA.by_month_chcat : view==="weekly" ? DATA.by_week_chcat : null;
+    if (base) {
+      // Transform {period:{chcat:metrics}} → {period:{Overall:metrics}} so render() works unchanged
+      const result = {};
+      Object.keys(base).forEach(function(p) {
+        const m = base[p][F.chcat];
+        if (m) result[p] = { Overall: m };
+      });
+      return result;
+    }
+  }
+  return view==="monthly" ? DATA.by_month : view==="weekly" ? DATA.by_week : DATA.by_day;
+}
 function onPeriodChange() { selPeriod = document.getElementById("periodSel").value; render(); }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -448,6 +464,20 @@ function onFilterChange(key) {
   // If month/week filter selected, jump the period selector
   if (key === "month" && val) { setView("monthly"); jumpToPeriod(val); return; }
   if (key === "week"  && val) { setView("weekly");  jumpToPeriod(val); return; }
+  // When a specific channel is selected, auto-set Ch.Cat to its parent category
+  if (key === "ch" && val) {
+    const mapping = DATA && DATA.ch_to_chcat ? DATA.ch_to_chcat : {};
+    const parent = mapping[val] || "";
+    F.chcat = parent;
+    document.getElementById("fChCat").value = parent;
+    document.getElementById("ddChCat").classList.toggle("active", parent !== "");
+  }
+  // When Ch.Cat is cleared, also clear Channel if it belonged to the old category
+  if (key === "chcat" && !val) {
+    F.ch = "";
+    document.getElementById("fCh").value = "";
+    document.getElementById("ddCh").classList.remove("active");
+  }
   render();
 }
 function jumpToPeriod(p) {
@@ -483,6 +513,7 @@ function fmtChg(diff, pval) {
 }
 // Get active locations for display (apply loc filter)
 function getActiveLocs(cur) {
+  if (F.chcat) return ["Overall"]; // chcat data only has Overall, no location breakdown
   const filtered = F.loc ? [F.loc] : LOC_ALL;
   return ["Overall", ...filtered.filter(l => cur[l] !== undefined)];
 }
@@ -582,9 +613,23 @@ function renderKPIs(cur, prev) {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Metrics Table
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function getMetricVal(cv, mkey) {
+  // Apply status filter to walk-in count metrics
+  if (F.status === "fresh" && mkey === "tw") return cv["fresh"] || 0;
+  if (F.status === "spill" && mkey === "tw") return cv["spill"] || 0;
+  return cv[mkey] || 0;
+}
 function renderTable(cur, prev) {
   const activeLocs = getActiveLocs(cur);
-  let h = "<thead><tr><th class='met'>Metric</th>";
+  // Build table title suffix for active filters
+  const filterTags = [];
+  if (F.chcat) filterTags.push("Ch.Cat: " + F.chcat);
+  if (F.ch)    filterTags.push("Ch: " + F.ch);
+  if (F.status) filterTags.push("Status: " + (F.status === "fresh" ? "Fresh" : "Spill"));
+  if (F.agent)  filterTags.push("Agent: " + F.agent);
+  const filterNote = filterTags.length ? ' <span style="font-size:11px;color:#6b7280;font-weight:400">· ' + filterTags.join(" · ") + "</span>" : "";
+
+  let h = "<thead><tr><th class='met'>Metric" + filterNote + "</th>";
   activeLocs.forEach(l => h += `<th colspan="2" class="grp">${l}</th>`);
   h += "</tr><tr><th class='met'></th>";
   activeLocs.forEach(() => h += "<th>Value</th><th>vs Prev</th>");
@@ -599,9 +644,9 @@ function renderTable(cur, prev) {
     h += `<td class="m">${m.label}${m.pct?'<span class="pct"> (%)</span>':""}`;
     h += "</td>";
     activeLocs.forEach(l => {
-      const key = l;
-      const cv = cur[key]||{}, pv = prev?(prev[key]||{}):null;
-      const val = cv[m.key]||0, pval = pv?(pv[m.key]||0):null;
+      const cv = cur[l]||{}, pv = prev?(prev[l]||{}):null;
+      const val = getMetricVal(cv, m.key);
+      const pval = pv ? getMetricVal(pv, m.key) : null;
       let vs = fmtN(val);
       if (m.pct && cv[m.pct]!=null) vs += `<span class="pct"> (${cv[m.pct]}%)</span>`;
       h += `<td>${vs}</td>`;
@@ -626,19 +671,31 @@ function renderCharts(cur, ps, byData) {
 }
 function renderTrend(ps, byData) {
   dc("cTrend");
-  const locsToShow = F.loc ? [F.loc] : LOC_ALL;
   const maxPts = view==="daily"?60:view==="weekly"?20:12;
   const labels = ps.slice(-maxPts);
-  const datasets = locsToShow.map(loc => ({
-    label: loc,
-    data: labels.map(p => (byData[p]||{})[loc]?.tu||0),
-    borderColor: LOC_COLORS[loc],
-    backgroundColor: LOC_COLORS[loc]+"22",
-    tension:.3, fill:false,
-    pointRadius: labels.length>30?0:3,
-  })).filter(ds => ds.data.some(v=>v>0));
+  var datasets;
+  if (F.chcat) {
+    // When Ch.Cat filter active: show tu trend for that chcat (Overall only)
+    const chcatBase = view==="monthly" ? DATA.by_month_chcat : view==="weekly" ? DATA.by_week_chcat : null;
+    datasets = [{
+      label: F.chcat,
+      data: labels.map(function(p){ return (chcatBase&&chcatBase[p]&&chcatBase[p][F.chcat]) ? chcatBase[p][F.chcat].tu||0 : 0; }),
+      borderColor: "#1a56db", backgroundColor: "#1a56db22",
+      tension:.3, fill:false, pointRadius: labels.length>30?0:3,
+    }];
+  } else {
+    const locsToShow = F.loc ? [F.loc] : LOC_ALL;
+    datasets = locsToShow.map(function(loc) { return {
+      label: loc,
+      data: labels.map(function(p){ return (byData[p]||{})[loc]?.tu||0; }),
+      borderColor: LOC_COLORS[loc],
+      backgroundColor: LOC_COLORS[loc]+"22",
+      tension:.3, fill:false,
+      pointRadius: labels.length>30?0:3,
+    }; }).filter(function(ds){ return ds.data.some(function(v){return v>0;}); });
+  }
   charts["cTrend"] = new Chart(document.getElementById("cTrend"), {
-    type:"line", data:{labels, datasets},
+    type:"line", data:{labels:labels, datasets:datasets},
     options:{responsive:true, plugins:{legend:{position:"bottom",labels:{boxWidth:10,font:{size:10}}}},
       scales:{x:{ticks:{maxTicksLimit:10,font:{size:10}}},y:{beginAtZero:true,ticks:{font:{size:10}}}}}
   });
@@ -646,11 +703,23 @@ function renderTrend(ps, byData) {
 function renderChannel() {
   dc("cChannel");
   const mkey = periodToMonth(selPeriod);
-  let raw = DATA.ch_by_month?.[mkey] || {};
-  // Filter by chcat if set (use lead_by_month as category proxy)
-  if (F.chcat) { raw = DATA.lead_by_month?.[mkey] || {}; }
-  // Filter to specific channel if set
-  if (F.ch) { const v=raw[F.ch]; raw = v ? {[F.ch]:v} : {}; }
+  let raw = {};
+  if (F.ch) {
+    // Specific channel selected: show just that channel vs total for the month
+    const allCh = DATA.channel_by_month?.[mkey] || {};
+    const v = allCh[F.ch];
+    raw = v ? {[F.ch]: v} : {};
+  } else if (F.chcat) {
+    // Ch.Cat selected: show specific channels that belong to this category
+    const allCh = DATA.channel_by_month?.[mkey] || {};
+    const mapping = DATA.ch_to_chcat || {};
+    Object.keys(allCh).forEach(function(ch) {
+      if (mapping[ch] === F.chcat) raw[ch] = allCh[ch];
+    });
+  } else {
+    // Default: show channel_category totals (4 buckets)
+    raw = DATA.ch_by_month?.[mkey] || {};
+  }
   const sorted = Object.entries(raw).sort((a,b)=>b[1]-a[1]).slice(0,8);
   if (!sorted.length) { dc("cChannel"); return; }
   charts["cChannel"] = new Chart(document.getElementById("cChannel"), {
