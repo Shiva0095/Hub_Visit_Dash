@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HUB Visit Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <style>
 :root{
   --primary:#1a56db;--primary-light:#e8f0fe;
@@ -284,6 +285,45 @@ tr:hover td.m{background:#dbeafe!important;}
       <canvas id="cTelecaller" height="110"></canvas>
     </div>
   </div>
+
+  <!-- Charts row 3 — Source-wise breakdown -->
+  <div class="chart-grid" style="grid-template-columns:1fr 1fr;margin-top:14px;">
+    <div class="chart-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="chart-title" style="margin-bottom:0;">📊 Source-wise Walk-ins</div>
+        <div style="font-size:11px;color:var(--muted);" id="srcWalkinsHint">Unique walk-ins attributed to first-entry source</div>
+      </div>
+      <canvas id="cSrcWalkins" height="220"></canvas>
+    </div>
+    <div class="chart-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="chart-title" style="margin-bottom:0;">🎯 Source-wise Conversion</div>
+        <div style="font-size:11px;color:var(--muted);">Bars = Unique Walk-ins · Line = Allocation %</div>
+      </div>
+      <canvas id="cSrcConv" height="220"></canvas>
+    </div>
+  </div>
+
+  <!-- Charts row 4 — Channel Source Week-over-Week Comparison -->
+  <div style="margin-top:14px;">
+    <div class="chart-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="chart-title" style="margin-bottom:0;">📅 Channel Source · Week-over-Week Comparison</div>
+        <div style="font-size:11px;color:var(--muted);" id="wowHint">Selected week = W · showing W, W-1 … W-4 · ★ = selected week</div>
+      </div>
+      <!-- Two sub-charts side by side -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;text-align:center;">Walk-ins per Channel Source</div>
+          <canvas id="cWowWalkins" height="200"></canvas>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;text-align:center;">Allocation % per Channel Source</div>
+          <canvas id="cWowConv" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ── Modal ──────────────────────────────────────────────────────────── -->
@@ -308,6 +348,9 @@ tr:hover td.m{background:#dbeafe!important;}
 </div>
 
 <script>
+// Register datalabels plugin globally
+Chart.register(ChartDataLabels);
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Constants
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -518,12 +561,15 @@ function fmtChg(diff, pval) {
     ? `<span class="ch chu">▲ +${Math.abs(diff).toLocaleString()}${p}</span>`
     : `<span class="ch chd">▼ ${diff.toLocaleString()}${p}</span>`;
 }
-// Get active locations for display (apply loc filter)
+// Get active locations for table columns.
+// - Source / Ch.Cat / Lead Type data is Overall-only (no per-location breakdown from Apps Script)
+//   so we can only show Overall in those cases.
+// - Otherwise always show ALL available locations so the table is a useful side-by-side view.
+//   The Location filter dropdown affects KPI cards, Trend chart, and Funnel — not the table columns.
 function getActiveLocs(cur) {
-  // Channel/Source/Lead Type data only has Overall, no per-location breakdown
   if (F.ch || F.chcat || F.leadtype) return ["Overall"];
-  const filtered = F.loc ? [F.loc] : LOC_ALL;
-  return ["Overall", ...filtered.filter(l => cur[l] !== undefined)];
+  // Show all locations that have data (ignore loc filter here — loc filter = KPI/chart focus)
+  return ["Overall", ...LOC_ALL.filter(function(l){ return cur[l] !== undefined; })];
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -639,9 +685,15 @@ function renderTable(cur, prev) {
   const filterNote = filterTags.length ? ' <span style="font-size:11px;color:#6b7280;font-weight:400">· ' + filterTags.join(" · ") + "</span>" : "";
 
   let h = "<thead><tr><th class='met'>Metric" + filterNote + "</th>";
-  activeLocs.forEach(l => h += `<th colspan="2" class="grp">${l}</th>`);
+  activeLocs.forEach(function(l) {
+    // Highlight selected location column
+    const isFiltered = F.loc && l === F.loc;
+    const style = isFiltered ? ' style="background:#1a56db;outline:2px solid #f59e0b;outline-offset:-2px;"' : '';
+    const label  = isFiltered ? l + " ★" : l;
+    h += `<th colspan="2" class="grp"${style}>${label}</th>`;
+  });
   h += "</tr><tr><th class='met'></th>";
-  activeLocs.forEach(() => h += "<th>Value</th><th>vs Prev</th>");
+  activeLocs.forEach(function() { h += "<th>Value</th><th>vs Prev</th>"; });
   h += "</tr></thead><tbody>";
   METRICS.forEach(m => {
     if (m.sep) {
@@ -677,6 +729,9 @@ function renderCharts(cur, ps, byData) {
   renderFunnel(cur);
   renderAgents();
   renderTelecaller();
+  renderSourceWalkins();
+  renderSourceConv();
+  renderWoW();
 }
 function renderTrend(ps, byData) {
   dc("cTrend");
@@ -706,7 +761,15 @@ function renderTrend(ps, byData) {
   }
   charts["cTrend"] = new Chart(document.getElementById("cTrend"), {
     type:"line", data:{labels:labels, datasets:datasets},
-    options:{responsive:true, plugins:{legend:{position:"bottom",labels:{boxWidth:10,font:{size:10}}}},
+    options:{responsive:true,
+      plugins:{
+        legend:{position:"bottom",labels:{boxWidth:10,font:{size:10}}},
+        datalabels:{
+          display: function(ctx){ return labels.length <= 15 && ctx.dataset.data[ctx.dataIndex] > 0; },
+          anchor:"end", align:"top", font:{size:9}, color:"#374151",
+          formatter: function(v){ return v > 0 ? v.toLocaleString() : ""; }
+        }
+      },
       scales:{x:{ticks:{maxTicksLimit:10,font:{size:10}}},y:{beginAtZero:true,ticks:{font:{size:10}}}}}
   });
 }
@@ -732,10 +795,19 @@ function renderChannel() {
   }
   const sorted = Object.entries(raw).sort((a,b)=>b[1]-a[1]).slice(0,8);
   if (!sorted.length) { dc("cChannel"); return; }
+  const chTotal = sorted.reduce((a,b)=>a+b[1],0);
   charts["cChannel"] = new Chart(document.getElementById("cChannel"), {
     type:"doughnut",
     data:{labels:sorted.map(x=>x[0]), datasets:[{data:sorted.map(x=>x[1]),backgroundColor:PALETTE,borderWidth:2}]},
-    options:{responsive:true, plugins:{legend:{position:"bottom",labels:{boxWidth:10,font:{size:10}}}}}
+    options:{responsive:true,
+      plugins:{
+        legend:{position:"bottom",labels:{boxWidth:10,font:{size:10}}},
+        datalabels:{
+          display: function(ctx){ return ctx.dataset.data[ctx.dataIndex] > 0; },
+          color:"#fff", font:{weight:"bold",size:10},
+          formatter: function(v){ return v.toLocaleString()+"\n("+(chTotal>0?(v/chTotal*100).toFixed(1):0)+"%)"; }
+        }
+      }}
   });
 }
 function renderFunnel(cur) {
@@ -757,7 +829,7 @@ function renderFunnel(cur) {
       backgroundColor:FUNNEL_COLORS,
       borderRadius:4
     }]},
-    options:{responsive:true,indexAxis:"y",
+    options:{responsive:true,indexAxis:"y",layout:{padding:{right:55}},
       plugins:{
         legend:{
           display:true,
@@ -775,6 +847,10 @@ function renderFunnel(cur) {
               });
             }
           }
+        },
+        datalabels:{
+          anchor:"end", align:"end", font:{size:10,weight:"bold"}, color:"#374151",
+          formatter: function(v){ return v > 0 ? v.toLocaleString() : ""; }
         },
         tooltip:{callbacks:{label:ctx=>{
           const p=(ctx.parsed.x/base*100).toFixed(1);
@@ -800,8 +876,13 @@ function renderAgents() {
     type:"bar",
     data:{labels:sorted.map(x=>x[0].replace(/_/g," ")),
       datasets:[{label:"Walk-ins", data:sorted.map(x=>x[1]),backgroundColor:"#1a56db",borderRadius:4}]},
-    options:{responsive:true,indexAxis:"y",
-      plugins:{legend:{display:true,position:"bottom",labels:{boxWidth:12,font:{size:10}}}},
+    options:{responsive:true,indexAxis:"y",layout:{padding:{right:45}},
+      plugins:{
+        legend:{display:true,position:"bottom",labels:{boxWidth:12,font:{size:10}}},
+        datalabels:{anchor:"end",align:"end",font:{size:10,weight:"bold"},color:"#374151",
+          formatter:function(v){return v>0?v.toLocaleString():"";}
+        }
+      },
       scales:{x:{beginAtZero:true,ticks:{font:{size:10}}},y:{ticks:{font:{size:10}}}}}
   });
 }
@@ -828,9 +909,14 @@ function renderTelecaller() {
       }]
     },
     options:{
-      responsive:true,
+      responsive:true,layout:{padding:{top:20}},
       plugins:{
         legend:{display:true,position:"bottom",labels:{boxWidth:12,font:{size:10}}},
+        datalabels:{
+          anchor:"end",align:"end",font:{size:9,weight:"bold"},color:"#374151",
+          formatter:function(v){return v>0?v.toLocaleString():"";},
+          clamp:true
+        },
         tooltip:{callbacks:{label:ctx=>{
           const total=Object.values(raw).reduce((a,b)=>a+b,0);
           const p=(ctx.parsed.y/total*100).toFixed(1);
@@ -843,6 +929,334 @@ function renderTelecaller() {
       }
     }
   });
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Source-wise charts (walk-ins + conversion)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// Helper: get the per-source metrics dict for the current period
+function getSrcData() {
+  // Daily view has no per-source breakdown — fall back to the month
+  if (view === "monthly" && DATA.by_month_ch) return DATA.by_month_ch[selPeriod] || {};
+  if (view === "weekly"  && DATA.by_week_ch)  return DATA.by_week_ch[selPeriod]  || {};
+  // daily fallback → use monthly data for that month
+  return DATA.by_month_ch ? (DATA.by_month_ch[periodToMonth(selPeriod)] || {}) : {};
+}
+
+// Build sorted source entries, respecting Ch.Cat + Source filters
+function getSrcEntries() {
+  const srcData = getSrcData();
+  const mapping = DATA.ch_to_chcat || {};
+  let entries = Object.entries(srcData).map(function([src, m]) {
+    return { src, tu: m.tu||0, alloc: m.alloc||0, alloc_pct: m.alloc_pct||0 };
+  });
+  // Apply Channel_Source (chcat) filter
+  if (F.chcat) entries = entries.filter(function(e){ return mapping[e.src] === F.chcat; });
+  // Apply Source filter
+  if (F.ch)    entries = entries.filter(function(e){ return e.src === F.ch; });
+  // Sort by walk-ins desc
+  entries.sort(function(a,b){ return b.tu - a.tu; });
+  return entries;
+}
+
+function renderSourceWalkins() {
+  dc("cSrcWalkins");
+  const entries = getSrcEntries().filter(function(e){ return e.tu > 0; });
+  if (!entries.length) return;
+
+  // Color palette: use chcat colour per source if possible
+  const mapping = DATA.ch_to_chcat || {};
+  const catColors = {"Organic":"#0e9f6e","Referral":"#1a56db","Paid":"#f59e0b","Field":"#8b5cf6","Other":"#06b6d4"};
+  const colors = entries.map(function(e){
+    const cat = mapping[e.src] || "Other";
+    return catColors[cat] || PALETTE[Object.keys(catColors).indexOf(cat) % PALETTE.length] || "#1a56db";
+  });
+
+  charts["cSrcWalkins"] = new Chart(document.getElementById("cSrcWalkins"), {
+    type:"bar",
+    data:{
+      labels: entries.map(function(e){ return e.src; }),
+      datasets:[{
+        label:"Unique Walk-ins",
+        data: entries.map(function(e){ return e.tu; }),
+        backgroundColor: colors,
+        borderRadius:4
+      }]
+    },
+    options:{
+      responsive:true, indexAxis:"y", layout:{padding:{right:50}},
+      plugins:{
+        legend:{display:true,position:"bottom",labels:{boxWidth:12,font:{size:10}}},
+        datalabels:{
+          anchor:"end", align:"end", font:{size:10,weight:"bold"}, color:"#374151",
+          formatter:function(v){ return v > 0 ? v.toLocaleString() : ""; }
+        },
+        tooltip:{callbacks:{label:function(ctx){
+          const e = entries[ctx.dataIndex];
+          return [
+            " Walk-ins: "+e.tu.toLocaleString(),
+            " Alloc: "+e.alloc.toLocaleString()+" ("+e.alloc_pct.toFixed(1)+"%)"
+          ];
+        }}}
+      },
+      scales:{
+        x:{beginAtZero:true, ticks:{font:{size:10}}},
+        y:{ticks:{font:{size:10}}}
+      }
+    }
+  });
+}
+
+function renderSourceConv() {
+  dc("cSrcConv");
+  // Show top 12 by walk-ins
+  const entries = getSrcEntries().filter(function(e){ return e.tu > 0; }).slice(0,12);
+  if (!entries.length) return;
+
+  charts["cSrcConv"] = new Chart(document.getElementById("cSrcConv"), {
+    type:"bar",
+    data:{
+      labels: entries.map(function(e){ return e.src; }),
+      datasets:[
+        {
+          type:"bar",
+          label:"Unique Walk-ins",
+          data: entries.map(function(e){ return e.tu; }),
+          backgroundColor:"#1a56db99",
+          borderColor:"#1a56db",
+          borderWidth:1,
+          borderRadius:4,
+          yAxisID:"yWalkins",
+          order:2
+        },
+        {
+          type:"line",
+          label:"Alloc %",
+          data: entries.map(function(e){ return e.alloc_pct; }),
+          borderColor:"#f59e0b",
+          backgroundColor:"#f59e0b33",
+          pointBackgroundColor:"#f59e0b",
+          pointRadius:5,
+          tension:0.3,
+          yAxisID:"yPct",
+          order:1,
+          datalabels:{
+            anchor:"end", align:"top", font:{size:9,weight:"bold"}, color:"#b45309",
+            formatter:function(v){ return v > 0 ? v.toFixed(1)+"%" : ""; }
+          }
+        }
+      ]
+    },
+    options:{
+      responsive:true, layout:{padding:{top:20}},
+      plugins:{
+        legend:{display:true,position:"bottom",labels:{boxWidth:12,font:{size:10}}},
+        datalabels:{
+          // Default for bar dataset — show walk-in count above bar
+          display: function(ctx){ return ctx.dataset.type !== "line"; },
+          anchor:"end", align:"end", font:{size:9,weight:"bold"}, color:"#1e3a8a",
+          formatter:function(v){ return v > 0 ? v.toLocaleString() : ""; },
+          clamp:true
+        },
+        tooltip:{callbacks:{label:function(ctx){
+          if (ctx.dataset.type==="line") return " Alloc %: "+ctx.parsed.y.toFixed(1)+"%";
+          return " Walk-ins: "+ctx.parsed.y.toLocaleString();
+        }}}
+      },
+      scales:{
+        x:{ticks:{font:{size:10},maxRotation:35}},
+        yWalkins:{beginAtZero:true,position:"left",ticks:{font:{size:10}},title:{display:true,text:"Walk-ins",font:{size:10}}},
+        yPct:{beginAtZero:true,position:"right",max:100,ticks:{font:{size:10},callback:function(v){return v+"%";}},
+          title:{display:true,text:"Alloc %",font:{size:10}},grid:{drawOnChartArea:false}}
+      }
+    }
+  });
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Week-over-Week Channel Source Comparison
+// Shows last 5 weeks (W-4 … W) for all channel categories, side by side.
+// W = the anchor week derived from the selected period.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// Fixed channel-category colour palette so colours are consistent across charts
+const CHCAT_COLORS = {
+  "Organic":  "#0e9f6e",
+  "Referral": "#1a56db",
+  "Paid":     "#f59e0b",
+  "Field":    "#8b5cf6",
+};
+function chcatColor(cat, i) {
+  return CHCAT_COLORS[cat] || PALETTE[i % PALETTE.length];
+}
+
+// Parse a week-label "23 Feb 2026" → UTC midnight timestamp
+function parseWeekLabel(lbl) {
+  if (!lbl) return null;
+  const p = lbl.split(" ");
+  if (p.length < 3) return null;
+  const mo = MONTHS_SHORT.indexOf(p[1]);
+  if (mo < 0) return null;
+  return Date.UTC(parseInt(p[2]), mo, parseInt(p[0]));
+}
+
+// Find the anchor week index in DATA.weeks for the current selPeriod / view
+function getAnchorWeekIdx() {
+  const allWeeks = DATA.weeks || [];
+  if (!allWeeks.length) return -1;
+
+  if (view === "weekly") {
+    const idx = allWeeks.indexOf(selPeriod);
+    return idx >= 0 ? idx : allWeeks.length - 1;
+  }
+
+  if (view === "monthly") {
+    // Last week whose month-label matches selPeriod (e.g. "Feb 2026")
+    for (let i = allWeeks.length - 1; i >= 0; i--) {
+      const pts = allWeeks[i].split(" ");
+      if (pts.length >= 3 && pts[1] + " " + pts[2] === selPeriod) return i;
+    }
+    return allWeeks.length - 1;
+  }
+
+  // Daily — find the week whose start is <= selected day
+  const dayMs = new Date(selPeriod + "T00:00:00Z").getTime();
+  for (let i = allWeeks.length - 1; i >= 0; i--) {
+    const wMs = parseWeekLabel(allWeeks[i]);
+    if (wMs !== null && wMs <= dayMs) return i;
+  }
+  return allWeeks.length - 1;
+}
+
+function renderWoW() {
+  dc("cWowWalkins"); dc("cWowConv");
+  if (!DATA || !DATA.by_week_chcat || !DATA.weeks) return;
+
+  const allWeeks = DATA.weeks;
+  const anchorIdx = getAnchorWeekIdx();
+  if (anchorIdx < 0) return;
+
+  // 5 weeks: W-4 … W (oldest → newest, left → right)
+  const startIdx = Math.max(0, anchorIdx - 4);
+  const weekSlice = allWeeks.slice(startIdx, anchorIdx + 1);   // up to 5 entries
+
+  // Collect all unique chcats that appear in these weeks (apply F.chcat filter)
+  const chcatSet = new Set();
+  weekSlice.forEach(function(w) {
+    Object.keys(DATA.by_week_chcat[w] || {}).forEach(function(c) {
+      if (!F.chcat || c === F.chcat) chcatSet.add(c);
+    });
+  });
+  const chcats = [...chcatSet].sort();
+  if (!chcats.length) return;
+
+  // X-axis labels: show "23 Feb" with ★ on the selected (rightmost) week
+  const xLabels = weekSlice.map(function(w, i) {
+    const pts = w.split(" ");
+    const short = pts[0] + " " + (pts[1] || "");
+    return i === weekSlice.length - 1 ? short + " ★" : short;
+  });
+
+  // Build one dataset per chcat for WALK-INS (tu) and CONVERSION (alloc_pct)
+  const wkDatasets = [], cvDatasets = [];
+  chcats.forEach(function(chcat, i) {
+    const color = chcatColor(chcat, i);
+    const tuArr      = weekSlice.map(function(w){ const m=(DATA.by_week_chcat[w]||{})[chcat]; return m?m.tu:0; });
+    const allocArr   = weekSlice.map(function(w){ const m=(DATA.by_week_chcat[w]||{})[chcat]; return m?m.alloc:0; });
+    const pctArr     = weekSlice.map(function(w){ const m=(DATA.by_week_chcat[w]||{})[chcat]; return m?Math.round(m.alloc_pct*10)/10:0; });
+
+    const base = {
+      label: chcat,
+      backgroundColor: color + "cc",
+      borderColor: color,
+      borderWidth: 1,
+      borderRadius: 3,
+    };
+
+    wkDatasets.push(Object.assign({}, base, {
+      data: tuArr,
+      _alloc: allocArr,
+      _pct: pctArr,
+    }));
+    cvDatasets.push(Object.assign({}, base, {
+      data: pctArr,
+      _tu: tuArr,
+      _alloc: allocArr,
+    }));
+  });
+
+  // Shared chart options factory
+  function makeOpts(yLabel, yMax, dlFormatter, ttLabel) {
+    return {
+      responsive: true,
+      layout: { padding: { top: 24 } },
+      plugins: {
+        legend: { display: true, position: "bottom", labels: { boxWidth: 12, font: { size: 10 } } },
+        datalabels: {
+          anchor: "end", align: "end", clamp: true,
+          font: { size: 9, weight: "bold" },
+          color: function(ctx) { return ctx.dataset.borderColor; },
+          formatter: dlFormatter,
+        },
+        tooltip: {
+          callbacks: {
+            label: ttLabel,
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { font: { size: 10 } } },
+        y: {
+          beginAtZero: true,
+          max: yMax,
+          ticks: { font: { size: 10 }, callback: function(v) { return yLabel === "%" ? v + "%" : v.toLocaleString(); } },
+          title: { display: true, text: yLabel, font: { size: 10 } }
+        }
+      }
+    };
+  }
+
+  // Walk-ins chart
+  charts["cWowWalkins"] = new Chart(document.getElementById("cWowWalkins"), {
+    type: "bar",
+    data: { labels: xLabels, datasets: wkDatasets },
+    options: makeOpts(
+      "Unique Walk-ins", undefined,
+      function(v) { return v > 0 ? v.toLocaleString() : ""; },
+      function(ctx) {
+        const ds = ctx.dataset;
+        const i = ctx.dataIndex;
+        return [
+          " " + ds.label + " walk-ins: " + (ds.data[i]||0).toLocaleString(),
+          " Alloc: " + (ds._alloc[i]||0).toLocaleString() + " (" + (ds._pct[i]||0).toFixed(1) + "%)"
+        ];
+      }
+    )
+  });
+
+  // Conversion % chart
+  charts["cWowConv"] = new Chart(document.getElementById("cWowConv"), {
+    type: "bar",
+    data: { labels: xLabels, datasets: cvDatasets },
+    options: makeOpts(
+      "%", 100,
+      function(v) { return v > 0 ? v.toFixed(1) + "%" : ""; },
+      function(ctx) {
+        const ds = ctx.dataset;
+        const i = ctx.dataIndex;
+        return [
+          " " + ds.label + " alloc %: " + (ds.data[i]||0).toFixed(1) + "%",
+          " Walk-ins: " + (ds._tu[i]||0).toLocaleString() + " → Alloc: " + (ds._alloc[i]||0).toLocaleString()
+        ];
+      }
+    )
+  });
+
+  // Update hint text to show anchor week
+  const anchorLbl = allWeeks[anchorIdx] || "";
+  const hint = document.getElementById("wowHint");
+  if (hint) hint.textContent = "W = " + anchorLbl + " · showing last " + weekSlice.length + " weeks · ★ = W";
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
