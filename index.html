@@ -394,7 +394,8 @@ let F = { month:"", week:"", loc:"", chcat:"", ch:"", leadtype:"", status:"", ag
 async function init() {
   const url = localStorage.getItem("hubScriptUrl");
   if (!url) {
-    setStatus("🔗 No Google Sheets connected — click 'Live Data' to enter your Apps Script URL", false);
+    setStatus("📄 Using bundled data_v2.json — click 'Live Data' to connect a live Google Sheet", false);
+    await loadLocal();
     return;
   }
   setStatus("⏳ Loading from Google Sheets…", false);
@@ -410,7 +411,20 @@ async function init() {
     throw new Error("processLive returned null");
   } catch(e) {
     console.error(e);
-    setStatus("❌ Could not load data from Google Sheets — check your Apps Script URL and redeploy", false, true);
+    setStatus("⚠️ Live data failed — falling back to bundled data_v2.json", false, true);
+    await loadLocal();
+  }
+}
+async function loadLocal() {
+  try {
+    const r = await fetch("data_v2.json");
+    if (!r.ok) throw new Error("data_v2.json not found");
+    DATA = await r.json();
+    setStatus("📄 Loaded bundled data_v2.json (data through: " + (DATA.days ? DATA.days[DATA.days.length-1] : "?") + ")", true);
+    setupUI();
+  } catch(e) {
+    console.error(e);
+    setStatus("❌ No live connection and data_v2.json not found — place it next to index.html or click Live Data", false, true);
   }
 }
 function setStatus(msg, ok, err) {
