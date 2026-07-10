@@ -31,7 +31,7 @@ OUT_JSON = sys.argv[2] if len(sys.argv) > 2 else "outputs/data_v2_new.json"
 TODAY = datetime(2026, 7, 10)  # today's date per env, truncated to midnight
 
 MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-LOCS = ['Overall', 'Hyderabad', 'Damaigudda', 'Nagole Dost']
+LOCS = ['Overall', 'Hyderabad', 'Damaigudda', 'Nagole Dost', 'HYD LB Nagar']
 LEAD_TYPES = ['active', 'new join', 'rejoin', 'resurrection']
 
 NULLS = {'', 'NULL', 'null', None, '-', 'NaT', 'nan'}
